@@ -276,7 +276,7 @@ if __name__ == "__main__":
         "--seed", type=int, default=42, help="random seed (default: 42)"
     )
     parser.add_argument(
-        "--epochs", type=int, default=1, help="number of epochs to train (default: 1)"
+        "--epochs", type=int, default=3, help="number of epochs to train (default: 1)"
     )
     parser.add_argument(
         "--dataset",
@@ -313,10 +313,10 @@ if __name__ == "__main__":
         "--model", type=str, default="VIT", help="model type (default: BaseModel)"
     )
     parser.add_argument(
-        "--optimizer", type=str, default="SGD", help="optimizer type (default: SGD)"
+        "--optimizer", type=str, default="AdamW", help="optimizer type (default: SGD)"
     )
     parser.add_argument(
-        "--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)"
+        "--lr", type=float, default=1e-4, help="learning rate (default: 1e-3)"
     )
     parser.add_argument(
         "--val_ratio",
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr_decay_step",
         type=int,
-        default=20,
+        default=1,
         help="learning rate scheduler deacy step (default: 20)",
     )
     parser.add_argument(
