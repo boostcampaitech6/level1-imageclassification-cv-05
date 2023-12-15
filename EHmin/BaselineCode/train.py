@@ -249,7 +249,9 @@ def train(data_dir, model_dir, args):
                         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
                     )
                     inputs_np = dataset_module.denormalize_image(
-                        inputs_np, dataset.mean, dataset.std
+                        # inputs_np, dataset.mean, dataset.std
+                        inputs_np, (0.548, 0.504, 0.479), (0.237, 0.247, 0.246)
+                        
                     )
                     figure = grid_image(
                         inputs_np,
