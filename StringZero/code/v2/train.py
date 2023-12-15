@@ -145,7 +145,7 @@ def train(data_dir, model_dir, args):
     # model = model_module(num_classes=num_classes).to(device)
 
     # EfficientNet 모델 불러오기 (사전 학습된 가중치 사용)
-    model = timm.create_model('efficientnet_b0', pretrained=True)
+    model = timm.create_model('efficientnet_b1', pretrained=True)
 
     # 마지막 컨볼루션 레이어와 분류기를 제외한 나머지 부분 고정
     for name, param in model.named_parameters():
