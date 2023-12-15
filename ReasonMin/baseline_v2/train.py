@@ -287,7 +287,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--augmentation",
         type=str,
-        default="BaseAugmentation",
+        default="CustomAugmentation",
         help="data augmentation type (default: BaseAugmentation)",
     )
     parser.add_argument(
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr_decay_step",
         type=int,
-        default=1,
+        default=10,
         help="learning rate scheduler deacy step (default: 20)",
     )
     parser.add_argument(
