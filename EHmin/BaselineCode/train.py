@@ -18,6 +18,9 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import MaskBaseDataset
 from loss import create_criterion
 
+import copy
+from torch.utils.data import ConcatDataset
+from torch.utils.data import random_split
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -106,7 +109,19 @@ def train(data_dir, model_dir, args):
         data_dir="./Data/train/images",
     )
     num_classes = dataset.num_classes  # 18
-
+    
+    #/ My Transform
+    dataset_B = copy.deepcopy(dataset)
+    transform_module = getattr(
+        import_module("dataset"), "BaseAugmentation"
+    )  # default: BaseAugmentation
+    transform_B = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    dataset_B.set_transform(transform_B)
+    
     # -- augmentation
     transform_module = getattr(
         import_module("dataset"), args.augmentation
@@ -117,9 +132,16 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
     dataset.set_transform(transform)
+    
+    # dataset.append(dataset_B)
+    dataset = ConcatDataset([dataset,dataset_B])
 
     # -- data_loader
-    train_set, val_set = dataset.split_dataset()
+    # train_set, val_set = dataset.split_dataset()
+    #! 직접 나눠주기 
+    n_val = int(len(dataset) * 0.2)
+    n_train = len(dataset) - n_val
+    train_set, val_set = random_split(dataset, [n_train, n_val])
 
     train_loader = DataLoader(
         train_set,
@@ -276,7 +298,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--augmentation",
         type=str,
-        default="BaseAugmentation",
+        default="CustomAugmentation",
         help="data augmentation type (default: BaseAugmentation)",
     )
     parser.add_argument(
