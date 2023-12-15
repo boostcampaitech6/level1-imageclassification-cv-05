@@ -166,6 +166,7 @@ def train(data_dir, model_dir, args):
         model.train()
         loss_value = 0
         matches = 0
+        
         for idx, train_batch in enumerate(train_loader):
             inputs, labels = train_batch
             inputs = inputs.to(device)
@@ -182,6 +183,41 @@ def train(data_dir, model_dir, args):
 
             loss_value += loss.item()
             matches += (preds == labels).sum().item()
+            '''
+        Multi Label Classification 문제로 치환하기
+            
+        for idx, train_batch in enumerate(train_loader):
+            inputs, (mask_labels, gender_labels, age_labels) = train_batch
+            inputs = inputs.to(device)
+            mask_labels = mask_labels.to(device)
+            gender_labels = gender_labels.to(device)
+            age_labels = age_labels.to(device)
+
+            optimizer.zero_grad()
+
+            outs = model(inputs)
+            mask_outs, gender_outs, age_outs = torch.split(outs, [3, 2, 3], dim=1)
+
+            mask_loss = criterion(mask_outs, mask_labels)
+            gender_loss = criterion(gender_outs, gender_labels)
+            age_loss = criterion(age_outs, age_labels)
+
+            total_loss = mask_loss + gender_loss + age_loss
+            total_loss.backward()
+            optimizer.step()
+
+            loss_value += total_loss.item()
+
+            preds_mask = torch.argmax(mask_outs, dim=-1)
+            preds_gender = torch.argmax(gender_outs, dim=-1)
+            preds_age = torch.argmax(age_outs, dim=-1)
+
+            matches_mask = (mask_labels == preds_mask).sum().item()
+            matches_gender = (gender_labels == preds_gender).sum().item()
+            matches_age = (age_labels == preds_age).sum().item()
+
+            matches += (matches_mask + matches_gender + matches_age) / 3
+            '''
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.batch_size / args.log_interval
@@ -203,12 +239,83 @@ def train(data_dir, model_dir, args):
         scheduler.step()
 
         # val loop
+        '''
+        with torch.no_grad():
+            print("Calculating validation results...")
+            model.eval()
+            val_loss_items = []
+            val_acc_items_mask = []
+            val_acc_items_gender = []
+            val_acc_items_age = []
+            figure = None
+
+        for val_batch in val_loader:
+            inputs, (mask_labels, gender_labels, age_labels) = val_batch
+            inputs = inputs.to(device)
+            mask_labels = mask_labels.to(device)
+            gender_labels = gender_labels.to(device)
+            age_labels = age_labels.to(device)
+
+            outs = model(inputs)
+            mask_outs, gender_outs, age_outs = torch.split(outs, [3, 2, 3], dim=1)
+
+            mask_loss = criterion(mask_outs, mask_labels).item()
+            gender_loss = criterion(gender_outs, gender_labels).item()
+            age_loss = criterion(age_outs, age_labels).item()
+
+            loss_item = mask_loss + gender_loss + age_loss
+
+            preds_mask = torch.argmax(mask_outs, dim=-1)
+            preds_gender = torch.argmax(gender_outs, dim=-1)
+            preds_age = torch.argmax(age_outs, dim=-1)
+
+            mask_acc = (mask_labels == preds_mask).sum().item() / mask_labels.size(0)
+            gender_acc = (gender_labels == preds_gender).sum().item() / gender_labels.size(0)
+            age_acc = (age_labels == preds_age).sum().item() / age_labels.size(0)
+
+            val_loss_items.append(loss_item)
+            val_acc_items_mask.append(mask_acc)
+            val_acc_items_gender.append(gender_acc)
+            val_acc_items_age.append(age_acc)
+
+            if figure is None:
+                inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
+                inputs_np = dataset_module.denormalize_image(inputs_np, dataset.mean, dataset.std)
+                figure = grid_image(
+                    inputs_np,
+                    (mask_labels, gender_labels, age_labels),
+                    (preds_mask, preds_gender, preds_age),
+                    n=16,
+                    shuffle=args.dataset != "MaskSplitByProfileDataset",
+                )
+
+        val_loss = np.mean(val_loss_items)
+        val_acc_mask = np.mean(val_acc_items_mask)
+        val_acc_gender = np.mean(val_acc_items_gender)
+        val_acc_age = np.mean(val_acc_items_age)
+        val_acc_avg = (val_acc_mask + val_acc_gender + val_acc_age) / 3
+        best_val_loss = min(best_val_loss, val_loss)
+        if val_acc_avg > best_val_acc:
+            print(f"New best model for val accuracy : {val_acc_avg:4.2%}! saving the best model..")
+            torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
+            best_val_acc = val_acc_avg
+        torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
+        print(
+            f"[Val] avg acc : {val_acc_avg:4.2%}, mask acc: {val_acc_mask:4.2%}, gender acc: {val_acc_gender:4.2%}, age acc: {val_acc_age:4.2%}, loss: {val_loss:4.2} || "
+            f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+        )
+        logger.add_scalar("Val/loss", val_loss, epoch)
+        logger.add_scalar("Val/accuracy", val_acc_avg, epoch)
+        logger.add_figure("results", figure, epoch)
+        print()
+        '''
         with torch.no_grad():
             print("Calculating validation results...")
             model.eval()
             val_loss_items = []
             val_acc_items = []
             figure = None
+            
             for val_batch in val_loader:
                 inputs, labels = val_batch
                 inputs = inputs.to(device)
@@ -221,7 +328,7 @@ def train(data_dir, model_dir, args):
                 acc_item = (labels == preds).sum().item()
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
-
+            
                 if figure is None:
                     inputs_np = (
                         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
@@ -231,12 +338,12 @@ def train(data_dir, model_dir, args):
                     )
                     figure = grid_image(
                         inputs_np,
-                        labels,
+                        labels, # labels,
                         preds,
                         n=16,
                         shuffle=args.dataset != "MaskSplitByProfileDataset",
                     )
-
+                
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
             best_val_loss = min(best_val_loss, val_loss)
