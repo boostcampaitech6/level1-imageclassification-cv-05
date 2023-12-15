@@ -52,7 +52,7 @@ class BaseAugmentation:
         transform (Compose): 이미지를 변환을 위한 torchvision.transforms.Compose 객체
     """
 
-    def __init__(self, resize, mean, std, **args):
+    def __init__(self, mean, std, resize, **args):
         """
         Args:
             resize (tuple): 이미지의 리사이즈 대상 크지

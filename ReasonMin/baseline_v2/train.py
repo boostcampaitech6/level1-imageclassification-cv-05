@@ -139,8 +139,19 @@ def train(data_dir, model_dir, args):
         drop_last=True,
     )
 
+    #choose model
+    '''
+    def get_model_class(model_name):
+        if model_name.lower() == 'vit':
+            from model import VIT
+            return 'VIT'
+        else:
+            from model import BaseModel
+            return 'BaseModel'
+    '''
+            
     # -- model
-    model_module = getattr(import_module("model"), args.model)  # default: BaseModel
+    model_module = getattr(import_module("model"), args.model)  # default: BaseModel  , VIT 로 수정
     model = model_module(num_classes=num_classes).to(device)
     model = torch.nn.DataParallel(model)
 
@@ -283,7 +294,7 @@ if __name__ == "__main__":
         "--resize",
         nargs=2,
         type=int,
-        default=[128, 96],
+        default=[224, 224],
         help="resize size for image when training",
     )
     parser.add_argument(
@@ -299,7 +310,7 @@ if __name__ == "__main__":
         help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="BaseModel", help="model type (default: BaseModel)"
+        "--model", type=str, default="VIT", help="model type (default: BaseModel)"
     )
     parser.add_argument(
         "--optimizer", type=str, default="SGD", help="optimizer type (default: SGD)"
@@ -339,7 +350,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_dir",
         type=str,
-        default=os.environ.get("SM_CHANNEL_TRAIN", "Data/train/images"),
+        default=os.environ.get("SM_CHANNEL_TRAIN", "/data/ephemeral/home/level1-imageclassification-cv-05/Data/train/images"),
     )
     parser.add_argument(
         "--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./model")
