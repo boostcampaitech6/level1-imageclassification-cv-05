@@ -104,7 +104,7 @@ class CustomAugmentation:
             [
                 CenterCrop((320, 256)),
                 Resize(resize, Image.BILINEAR),
-                ColorJitter(0.1, 0.1, 0.1, 0.1),
+                #v2 ColorJitter(0.1, 0.1, 0.1, 0.1),
                 ToTensor(),
                 Normalize(mean=mean, std=std),
                 AddGaussianNoise(),
@@ -169,7 +169,7 @@ class AgeLabels(int, Enum):
 class MaskBaseDataset(Dataset):
     """마스크 데이터셋의 기본 클래스"""
 
-    num_classes = 3 * 2 * 3
+    num_classes = 3 * 2 * 3 # Multi Label Classification 문제로 치환하기 3 + 2 + 3
 
     _file_names = {
         "mask1": MaskLabels.MASK,
@@ -260,10 +260,11 @@ class MaskBaseDataset(Dataset):
         mask_label = self.get_mask_label(index)
         gender_label = self.get_gender_label(index)
         age_label = self.get_age_label(index)
+        # Multi Label Classification 문제로 치환하기 
         multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
 
         image_transform = self.transform(image)
-        return image_transform, multi_class_label
+        return image_transform, multi_class_label # Multi Label Classification 문제로 치환하기  (mask_label, gender_label, age_label)
 
     def __len__(self):
         """데이터셋의 길이를 반환하는 메서드"""
