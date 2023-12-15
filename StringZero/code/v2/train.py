@@ -149,12 +149,13 @@ def train(data_dir, model_dir, args):
 
     # 마지막 컨볼루션 레이어와 분류기를 제외한 나머지 부분 고정
     for name, param in model.named_parameters():
-        if "classifier" not in name and "features.7" not in name:  # 마지막 conv 블록은 'features.7'
+        if "classifier" not in name: #and "features.7" not in name:  # 마지막 conv 블록은 'features.7'
             param.requires_grad = False
 
     # 새로운 분류기 정의
     num_features = model.classifier.in_features
     model.classifier = nn.Linear(num_features, 18)  # 18개의 출력 레이블을 가진 새로운 분류기
+    
     model = torch.nn.DataParallel(model)
 
     # -- loss & metric
