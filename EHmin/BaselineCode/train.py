@@ -265,7 +265,7 @@ if __name__ == "__main__":
         "--seed", type=int, default=42, help="random seed (default: 42)"
     )
     parser.add_argument(
-        "--epochs", type=int, default=1, help="number of epochs to train (default: 1)"
+        "--epochs", type=int, default=10, help="number of epochs to train (default: 1)"
     )
     parser.add_argument(
         "--dataset",
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         "--resize",
         nargs=2,
         type=int,
-        default=[128, 96],
+        default=[256, 256],
         help="resize size for image when training",
     )
     parser.add_argument(
@@ -299,10 +299,10 @@ if __name__ == "__main__":
         help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="BaseModel", help="model type (default: BaseModel)"
+        "--model", type=str, default="MyModel", help="model type (default: BaseModel)"
     )
     parser.add_argument(
-        "--optimizer", type=str, default="SGD", help="optimizer type (default: SGD)"
+        "--optimizer", type=str, default="AdamW", help="optimizer type (default: SGD)"
     )
     parser.add_argument(
         "--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)"

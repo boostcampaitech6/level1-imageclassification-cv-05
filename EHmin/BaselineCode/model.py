@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
+import timm
 
 
 class BaseModel(nn.Module):
@@ -60,10 +62,18 @@ class MyModel(nn.Module):
         2. 나만의 모델 아키텍쳐를 디자인 해봅니다.
         3. 모델의 output_dimension 은 num_classes 로 설정해주세요.
         """
+        # self.model = timm.create_model(model_name='mobilenetv3_small_050', pretrained=True)
+        self.model = timm.create_model(model_name= 'swinv2_base_window8_256', pretrained=True)
+        self.model.classifier = nn.LazyLinear(num_classes)
 
     def forward(self, x):
         """
         1. 위에서 정의한 모델 아키텍쳐를 forward propagation 을 진행해주세요
         2. 결과로 나온 output 을 return 해주세요
         """
+        x = self.model(x)
         return x
+
+# pretrained_models = timm.list_models(pretrained=True)
+# for model in pretrained_models:
+#     print(model)
