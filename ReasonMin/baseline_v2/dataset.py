@@ -15,7 +15,13 @@ from torchvision.transforms import (
     Compose,
     CenterCrop,
     ColorJitter,
+    RandomGrayscale,
+    RandomRotation,
+    RandomHorizontalFlip
 )
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+import cv2
 
 # 지원되는 이미지 확장자 리스트
 IMG_EXTENSIONS = [
@@ -52,7 +58,7 @@ class BaseAugmentation:
         transform (Compose): 이미지를 변환을 위한 torchvision.transforms.Compose 객체
     """
 
-    def __init__(self, resize, mean, std, **args):
+    def __init__(self, mean, std, resize, **args):
         """
         Args:
             resize (tuple): 이미지의 리사이즈 대상 크지
@@ -77,7 +83,7 @@ class BaseAugmentation:
         Returns:
             Tensor: Argumentation이 적용된 이미지
         """
-        return self.transform(image)
+        return self.transform(image=image)
 
 
 class AddGaussianNoise(object):
@@ -102,12 +108,16 @@ class CustomAugmentation:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose(
             [
-                CenterCrop((320, 256)),
+                CenterCrop((320, 400)),
                 Resize(resize, Image.BILINEAR),
+                RandomHorizontalFlip(p=0.5),
+                RandomRotation(10),
                 ColorJitter(0.1, 0.1, 0.1, 0.1),
+                #RandomGrayscale(p=0.5),
                 ToTensor(),
-                Normalize(mean=mean, std=std),
-                AddGaussianNoise(),
+                Normalize(mean=[0.485, 0.456, 0.406],
+                          std=[0.229, 0.224, 0.225]),
+                #AddGaussianNoise()
             ]
         )
 

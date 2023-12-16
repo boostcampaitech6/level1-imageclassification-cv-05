@@ -1,7 +1,12 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+# vit 사용
+import timm
+from timm.data import resolve_data_config
+from timm.data.transforms_factory import create_transform
 
+'''
 class BaseModel(nn.Module):
     """
     기본적인 컨볼루션 신경망 모델
@@ -48,8 +53,8 @@ class BaseModel(nn.Module):
         x = self.avgpool(x)
         x = x.view(-1, 128)
         return self.fc(x)
-
-
+'''
+'''
 # Custom Model Template
 class MyModel(nn.Module):
     def __init__(self, num_classes):
@@ -67,3 +72,17 @@ class MyModel(nn.Module):
         2. 결과로 나온 output 을 return 해주세요
         """
         return x
+'''
+class VIT(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model('vit_base_patch16_224', pretrained=True)
+        in_features = self.model.head.in_features
+        self.model.head = nn.Linear(in_features, num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+    
+
+
