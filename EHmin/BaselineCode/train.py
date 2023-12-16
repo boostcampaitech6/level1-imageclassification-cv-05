@@ -18,6 +18,9 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import MaskBaseDataset
 from loss import create_criterion
 
+import copy
+from torch.utils.data import ConcatDataset
+from torch.utils.data import random_split
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -106,7 +109,21 @@ def train(data_dir, model_dir, args):
         data_dir="./Data/train/images",
     )
     num_classes = dataset.num_classes  # 18
-
+    
+    
+    
+    #/ My Transform
+    dataset_B = copy.deepcopy(dataset)
+    transform_module = getattr(
+        import_module("dataset"), "BaseAugmentation"
+    )  # default: BaseAugmentation
+    transform_B = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std,
+    )
+    dataset_B.set_transform(transform_B)
+    
     # -- augmentation
     transform_module = getattr(
         import_module("dataset"), args.augmentation
@@ -117,9 +134,16 @@ def train(data_dir, model_dir, args):
         std=dataset.std,
     )
     dataset.set_transform(transform)
+    
+    # dataset.append(dataset_B)
+    dataset = ConcatDataset([dataset,dataset_B])
 
     # -- data_loader
-    train_set, val_set = dataset.split_dataset()
+    # train_set, val_set = dataset.split_dataset()
+    #! 직접 나눠주기 
+    n_val = int(len(dataset) * 0.2)
+    n_train = len(dataset) - n_val
+    train_set, val_set = random_split(dataset, [n_train, n_val])
 
     train_loader = DataLoader(
         train_set,
@@ -143,6 +167,7 @@ def train(data_dir, model_dir, args):
     model_module = getattr(import_module("model"), args.model)  # default: BaseModel
     model = model_module(num_classes=num_classes).to(device)
     model = torch.nn.DataParallel(model)
+    print(model)
 
     # -- loss & metric
     criterion = create_criterion(args.criterion)  # default: cross_entropy
@@ -227,7 +252,9 @@ def train(data_dir, model_dir, args):
                         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
                     )
                     inputs_np = dataset_module.denormalize_image(
-                        inputs_np, dataset.mean, dataset.std
+                        # inputs_np, dataset.mean, dataset.std
+                        inputs_np, (0.548, 0.504, 0.479), (0.237, 0.247, 0.246)
+                        
                     )
                     figure = grid_image(
                         inputs_np,
@@ -265,7 +292,7 @@ if __name__ == "__main__":
         "--seed", type=int, default=42, help="random seed (default: 42)"
     )
     parser.add_argument(
-        "--epochs", type=int, default=1, help="number of epochs to train (default: 1)"
+        "--epochs", type=int, default=10, help="number of epochs to train (default: 1)"
     )
     parser.add_argument(
         "--dataset",
@@ -276,14 +303,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--augmentation",
         type=str,
-        default="BaseAugmentation",
+        default="CustomAugmentation",
         help="data augmentation type (default: BaseAugmentation)",
     )
     parser.add_argument(
         "--resize",
         nargs=2,
         type=int,
-        default=[128, 96],
+        default=[256, 256],
         help="resize size for image when training",
     )
     parser.add_argument(
@@ -299,10 +326,10 @@ if __name__ == "__main__":
         help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="BaseModel", help="model type (default: BaseModel)"
+        "--model", type=str, default="MyModel", help="model type (default: BaseModel)"
     )
     parser.add_argument(
-        "--optimizer", type=str, default="SGD", help="optimizer type (default: SGD)"
+        "--optimizer", type=str, default="AdamW", help="optimizer type (default: SGD)"
     )
     parser.add_argument(
         "--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)"
@@ -316,7 +343,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--criterion",
         type=str,
-        default="cross_entropy",
+        default="f1",
         help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
