@@ -64,7 +64,14 @@ class MyModel(nn.Module):
         """
         # self.model = timm.create_model(model_name='mobilenetv3_small_050', pretrained=True)
         self.model = timm.create_model(model_name= 'swinv2_base_window8_256', pretrained=True)
-        self.model.classifier = nn.LazyLinear(num_classes)
+        self.model.head.fc = nn.LazyLinear(num_classes)
+        # self.model.classifier = nn.LazyLinear(num_classes)
+        # for param in self.model.parameters():
+        #     param.requires_grad = False
+
+        # # classifier 의 파라미터는 훈련을 통해 업데이트되도록 설정
+        # for param in self.model.head.fc.parameters():
+        #     param.requires_grad = True
 
     def forward(self, x):
         """
@@ -77,3 +84,6 @@ class MyModel(nn.Module):
 # pretrained_models = timm.list_models(pretrained=True)
 # for model in pretrained_models:
 #     print(model)
+
+# m = MyModel(18)
+# print(m)

@@ -110,6 +110,8 @@ def train(data_dir, model_dir, args):
     )
     num_classes = dataset.num_classes  # 18
     
+    
+    
     #/ My Transform
     dataset_B = copy.deepcopy(dataset)
     transform_module = getattr(
@@ -165,6 +167,7 @@ def train(data_dir, model_dir, args):
     model_module = getattr(import_module("model"), args.model)  # default: BaseModel
     model = model_module(num_classes=num_classes).to(device)
     model = torch.nn.DataParallel(model)
+    print(model)
 
     # -- loss & metric
     criterion = create_criterion(args.criterion)  # default: cross_entropy
@@ -340,7 +343,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--criterion",
         type=str,
-        default="cross_entropy",
+        default="f1",
         help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
