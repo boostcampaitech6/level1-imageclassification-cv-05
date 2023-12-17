@@ -15,6 +15,8 @@ from torchvision.transforms import (
     Compose,
     CenterCrop,
     ColorJitter,
+    RandomHorizontalFlip
+
 )
 
 # 지원되는 이미지 확장자 리스트
@@ -42,6 +44,46 @@ def is_image_file(filename):
         bool: 파일 이름이 이미지 확장자를 가지면 True, 그렇지 않으면 False.
     """
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
+
+class NoAugmentation:
+    """
+    기본적인 Augmentation을 담당하는 클래스
+
+    Attributes:
+        transform (Compose): 이미지를 변환을 위한 torchvision.transforms.Compose 객체
+    """
+
+    def __init__(self, resize, mean, std, **args):
+        """
+        Args:
+            resize (tuple): 이미지의 리사이즈 대상 크지
+            mean (tuple): Normalize 변환을 위한 평균 값
+            std (tuple): Normalize 변환을 위한 표준 값
+        """
+        self.transform = Compose(
+            [
+                Resize(resize, Image.BILINEAR),
+                # ColorJitter(0.1, 0.1, 0.1, 0.1),
+                RandomHorizontalFlip(), # 0.5 확률 좌우반전 추가
+                ToTensor(),
+                # Normalize(mean=mean, std=std),
+                # AddGaussianNoise(),
+                
+            ]
+        )
+
+    def __call__(self, image):
+        """
+        이미지에 저장된 transform 적용
+
+        Args:
+            Image (PIL.Image): Augumentation을 적용할 이미지
+
+        Returns:
+            Tensor: Argumentation이 적용된 이미지
+        """
+        return self.transform(image)
+        # return image
 
 
 class BaseAugmentation:

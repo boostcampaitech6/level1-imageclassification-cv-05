@@ -162,11 +162,10 @@ class MyModel(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         
-        self.features = timm.create_model('efficientnet_b0', pretrained=True)
+        self.model = timm.create_model('efficientnet_b0', pretrained=True) #features ->model로 
         
-        in_features = self.features.classifier.in_features
-        self.features.classifier = nn.Linear(in_features, num_classes)
-
+        in_features = self.model.classifier.in_features
+        self.model.classifier = nn.Linear(in_features, num_classes)
         """
         1. 위와 같이 생성자의 parameter 에 num_claases 를 포함해주세요.
         2. 나만의 모델 아키텍쳐를 디자인 해봅니다.
@@ -178,5 +177,25 @@ class MyModel(nn.Module):
         1. 위에서 정의한 모델 아키텍쳐를 forward propagation 을 진행해주세요
         2. 결과로 나온 output 을 return 해주세요
         """
-        x = self.features(x)
+        x = self.model(x)
         return x
+
+class CustomViT(nn.Module):
+    def __init__(self, num_classes: int, pretrained: bool = True):
+        super(CustomViT, self).__init__()
+        # timm 라이브러리에서 사전 학습된 ViT 모델을 불러옵니다
+        self.vit = timm.create_model('vit_base_patch16_224', pretrained=pretrained)
+
+        # ViT의 분류기(classifier) 부분을 교체합니다
+        # 이는 예를 들어, 다른 수의 출력 클래스를 다루기 위해 필요할 수 있습니다
+        self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
+
+    def forward(self, x):
+        # ViT 모델을 통과시켜 결과를 반환합니다
+        return self.vit(x)
+
+    
+if __name__ == "__main__":
+    m = MyModel(18)
+    print(m)    
+
