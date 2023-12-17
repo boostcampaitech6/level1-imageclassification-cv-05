@@ -17,7 +17,7 @@ from torchvision.transforms import (
     ColorJitter,
     RandomHorizontalFlip
 
-)
+) #
 
 # 지원되는 이미지 확장자 리스트
 IMG_EXTENSIONS = [
