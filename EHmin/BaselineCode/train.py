@@ -343,7 +343,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--criterion",
         type=str,
-        default="f1",
+        default="cross_entropy",
         help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
