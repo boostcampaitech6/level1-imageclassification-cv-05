@@ -108,23 +108,23 @@ if __name__ == "__main__":
         "--resize",
         nargs=2,
         type=int,
-        default=(96, 128),
+        default=(256, 256),
         help="resize size for image when you trained (default: (96, 128))",
     )
     parser.add_argument(
-        "--model", type=str, default="BaseModel", help="model type (default: BaseModel)"
+        "--model", type=str, default="MyModel", help="model type (default: BaseModel)"
     )
 
     # 컨테이너 환경 변수
     parser.add_argument(
         "--data_dir",
         type=str,
-        default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
+        default=os.environ.get("SM_CHANNEL_EVAL", "./Data/eval/"),
     )
     parser.add_argument(
         "--model_dir",
         type=str,
-        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp"),
+        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp8"),
     )
     parser.add_argument(
         "--output_dir",
