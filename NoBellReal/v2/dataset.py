@@ -15,6 +15,8 @@ from torchvision.transforms import (
     Compose,
     CenterCrop,
     ColorJitter,
+    RandomHorizontalFlip,
+    RandomRotation
 )
 
 # 지원되는 이미지 확장자 리스트
@@ -105,6 +107,8 @@ class CustomAugmentation:
                 CenterCrop((320, 256)),
                 Resize(resize, Image.BILINEAR),
                 #v2 ColorJitter(0.1, 0.1, 0.1, 0.1),
+                RandomRotation(degrees=10),
+                RandomHorizontalFlip(p=0.5),
                 ToTensor(),
                 Normalize(mean=mean, std=std),
                 AddGaussianNoise(),
