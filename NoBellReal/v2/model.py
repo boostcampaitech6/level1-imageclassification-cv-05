@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+from efficientnet_pytorch import EfficientNet
 
 class BaseModel(nn.Module):
     """
@@ -117,3 +118,41 @@ class MyModel2(nn.Module):
         age_outs = self.fc_age(x)
 
         return torch.cat((mask_outs, gender_outs, age_outs), dim=1)
+    
+class MyResNeXtModel(nn.Module):
+    def __init__(self, num_classes):
+        super(MyResNeXtModel, self).__init__()
+        # 사전 훈련된 ResNeXt 모델 불러오기
+        self.resnext = models.resnext50_32x4d(pretrained=True)
+        # ResNeXt의 마지막 완전연결층 제거
+        self.resnext.fc = nn.Linear(self.resnext.fc.in_features, num_classes)
+
+    def forward(self, x):
+        # ResNeXt 특징 추출 및 분류
+        x = self.resnext(x)
+        return x
+    
+class MyInceptionModel(nn.Module):
+    def __init__(self, num_classes):
+        super(MyInceptionModel, self).__init__()
+        # 사전 훈련된 InceptionV3 모델 불러오기
+        self.inception = models.inception_v3(pretrained=True)
+        # InceptionV3의 마지막 완전연결층 교체
+        self.inception.fc = nn.Linear(self.inception.fc.in_features, num_classes)
+
+    def forward(self, x):
+        # InceptionV3 모델의 forward 메서드는 두 개의 출력을 반환합니다.
+        # 여기서는 메인 출력만 사용합니다.
+        outputs, _ = self.inception(x)
+        return outputs    
+
+class MyEfficientNetModel(nn.Module):
+    def __init__(self, num_classes):
+        super(MyEfficientNetModel, self).__init__()
+        # 사전 훈련된 EfficientNet-B0 모델 불러오기
+        self.efficientnet = EfficientNet.from_pretrained('efficientnet-b0')
+        # EfficientNet의 마지막 완전연결층 교체
+        self.efficientnet._fc = nn.Linear(self.efficientnet._fc.in_features, num_classes)
+
+    def forward(self, x):
+        return self.efficientnet(x)
