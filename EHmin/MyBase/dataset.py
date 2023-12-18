@@ -74,7 +74,7 @@ class CustomAugmentation:
         )
 
     def __call__(self, image):
-        return self.transform(image)
+        return self.transform(image = image)
     
 class BasicAugmentation:
     """커스텀 Augmentation을 담당하는 클래스"""
@@ -89,4 +89,4 @@ class BasicAugmentation:
         )
 
     def __call__(self, image):
-        return self.transform(image)
+        return self.transform(image= image)
