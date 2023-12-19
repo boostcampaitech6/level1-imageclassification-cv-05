@@ -1,0 +1,3 @@
+# python train.py --val_ratio 0.3 --optimizer AdamW --epoch 2 --resize 240 240 --augmentation BaseAugmentation --dataset MaskDataset --valid_batch_size 64 --name mask_model;
+python train.py --val_ratio 0.1 --optimizer AdamW --epoch 50 --resize 240 240 --augmentation CustomAugmentation --dataset GenderDataset --batch_size 128 --name gender_model --seed 21;
+python train.py --val_ratio 0.1 --optimizer AdamW --epoch 50 --resize 240 240 --augmentation CustomAugmentation --dataset AgeDataset --batch_size 128 --name age_model --seed 993;
