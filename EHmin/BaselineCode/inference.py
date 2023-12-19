@@ -124,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_dir",
         type=str,
-        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp8"),
+        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp"),
     )
     parser.add_argument(
         "--output_dir",

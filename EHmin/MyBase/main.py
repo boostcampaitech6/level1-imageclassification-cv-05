@@ -43,7 +43,7 @@ def main(args):
     # Seed 설정 
     seed_everything(args.seed)
     # Cuda 설정 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # GPU에서 연산
     # Save point 
     save_dir = increment_path(os.path.join(args.model_dir, args.name))
     
@@ -64,15 +64,17 @@ def main(args):
     # Dataset 생성
     custom_dataset_module = getattr(import_module("dataset"), args.dataset) 
     train_dataset = custom_dataset_module(train_df,transform)
+    train_dataset2 = custom_dataset_module(train_df,transform)
+    
     val_dataset = custom_dataset_module(val_df,basic_transform)
     
     # Data Loader
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0) 
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=torch.cuda.is_available()) 
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=torch.cuda.is_available())
     
     # Define Model
     model_module = getattr(import_module("model"), args.model) 
-    model = model_module(num_classes=18).to(device)  
+    model = model_module(num_classes=18)
     model = torch.nn.DataParallel(model)
     
     # Train set 
@@ -129,7 +131,7 @@ if __name__ == '__main__':
         "--optimizer", type=str, default="AdamW", help="optimizer type (default:AdamW)"
     )
     parser.add_argument(
-        "--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)"
+        "--lr", type=float, default=1e-4, help="learning rate (default: 1e-4)"
     )
     parser.add_argument(
         "--val_ratio", type=float, default=0.2, help="ratio for validaton (default: 0.2)",
