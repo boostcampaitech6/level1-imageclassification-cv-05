@@ -344,7 +344,7 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         data_dir,
         mean=(0.548, 0.504, 0.479),
         std=(0.237, 0.247, 0.246),
-        val_ratio=0.2,
+        val_ratio=0.1,
     ):
         self.indices = defaultdict(list)
         super().__init__(data_dir, mean, std, val_ratio)
@@ -354,6 +354,7 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         """프로필을 학습과 검증용으로 나누는 메서드"""
         length = len(profiles)
         n_val = int(length * val_ratio)
+        
 
         val_indices = set(random.sample(range(length), k=n_val))
         train_indices = set(range(length)) - val_indices
@@ -363,7 +364,20 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         """데이터셋 설정을 하는 메서드. 프로필 기준으로 나눈다."""
         profiles = os.listdir(self.data_dir)
         profiles = [profile for profile in profiles if not profile.startswith(".")]
-        split_profiles = self._split_profile(profiles, self.val_ratio)
+
+        ##################################################
+        # 53~39세 사람을 모두 "val"에 넣는다.
+        middle_age, other_age =[], []
+        for folder_name in profiles:
+            id, gender, race, age = profile.split("_")
+            if int(age)>=53 and int(age)<=59:
+                middle_age.append(folder_name)
+            else:
+                other_age.append(folder_name)
+
+        split_profiles = self._split_profile(other_age, self.val_ratio)
+        split_profiles["val"] += middle_age
+        ##################################################
 
         cnt = 0
         for phase, indices in split_profiles.items():
