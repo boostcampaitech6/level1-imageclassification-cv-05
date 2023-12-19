@@ -28,7 +28,7 @@ class DataLoader:
                     else:
                         continue
                     gender_label = 0 if labels[1].lower() == "male" else 1
-                    age_label = 0 if int(labels[3]) < 30 else (2 if int(labels[3]) > 60 else 1)
+                    age_label = 0 if int(labels[3]) < 30 else (2 if int(labels[3]) >= 60 else 1)
                     total_label = 6 * mask_label + 3 * gender_label + age_label
                     data.append({
                         'Image_path': os.path.join(item_path, file),

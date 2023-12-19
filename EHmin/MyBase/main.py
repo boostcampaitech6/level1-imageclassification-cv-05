@@ -64,7 +64,8 @@ def main(args):
     # Dataset 생성
     custom_dataset_module = getattr(import_module("dataset"), args.dataset) 
     train_dataset = custom_dataset_module(train_df,transform)
-    train_dataset2 = custom_dataset_module(train_df,transform)
+    train_dataset2 = custom_dataset_module(train_df,basic_transform)
+    train_dataset = train_dataset + train_dataset2
     
     val_dataset = custom_dataset_module(val_df,basic_transform)
     
@@ -164,3 +165,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # print(args)
     main(args)
+    
+    # /opt/conda/bin/python /data/ephemeral/home/level1-imageclassification-cv-05/EHmin/MyBase/main.py

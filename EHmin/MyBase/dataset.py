@@ -7,7 +7,7 @@ import numpy as np
 
 class CustomDataset(Dataset):
     
-    def __init__(self, dataframe, transform=None):
+    def __init__(self, dataframe, transform=None, test= False):
         """
         Custom dataset that accepts a DataFrame, a transformation function, and returns images and labels.
         
@@ -16,6 +16,7 @@ class CustomDataset(Dataset):
         """
         self.dataframe = dataframe
         self.transform = transform
+        self.test = test
 
     def __len__(self):
         return len(self.dataframe)
@@ -34,6 +35,9 @@ class CustomDataset(Dataset):
         # Apply transformations if any
         if self.transform:
             image = self.transform(image=np.array(image))['image']  # Convert to numpy array and apply transform
+            
+        if self.test:
+            return image
         
         # Get labels from the dataframe
         mask_label = torch.tensor(self.dataframe.iloc[idx]['Mask_label'], dtype=torch.long)
@@ -67,7 +71,11 @@ class CustomAugmentation:
     def __init__(self, resize):
         self.transform = A.Compose(
             [
-                A.Resize(resize[0],resize[1]),
+                # A.CenterCrop(height=300, width=300),
+                A.Resize(resize[0],resize[1]), # Image.BILINEAR is `interpolation=1` in Albumentations
+                A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+                A.Rotate(limit=10),
+                A.HorizontalFlip(p=1),  # p=1 means the flip is applied to all images
                 A.Normalize(),
                 ToTensorV2()
             ]

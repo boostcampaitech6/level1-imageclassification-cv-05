@@ -2,12 +2,27 @@ import argparse
 import multiprocessing
 import os
 from importlib import import_module
-
+import json
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+from dataset import CustomDataset
 
-from dataset import TestDataset, MaskBaseDataset
+# from dataset import TestDataset, MaskBaseDataset
+
+def load_config(model_dir):
+    """
+    model_dir 경로에서 config.json 파일을 읽고 해당 내용을 반환합니다.
+
+    Args:
+        model_dir (str): 모델 디렉토리 경로
+
+    Returns:
+        dict: config.json 파일의 내용
+    """
+    config_path = os.path.join(model_dir, "config.json")
+    with open(config_path, "r") as file:
+        return json.load(file)
 
 
 def load_model(saved_model, num_classes, device):
@@ -37,7 +52,7 @@ def load_model(saved_model, num_classes, device):
 
 
 @torch.no_grad()
-def inference(data_dir, model_dir, output_dir, args):
+def inference(data_dir, model_dir, args):
     """
     모델 추론을 수행하는 함수
 
@@ -50,14 +65,12 @@ def inference(data_dir, model_dir, output_dir, args):
     Returns:
         None
     """
-
+    
     # CUDA를 사용할 수 있는지 확인
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    # 클래스의 개수를 설정한다. (마스크, 성별, 나이의 조합으로 18)
-    num_classes = MaskBaseDataset.num_classes  # 18
-    model = load_model(model_dir, num_classes, device).to(device)
+    model = load_model(model_dir,18, device).to(device)
     model.eval()
 
     # 이미지 파일 경로와 정보 파일을 읽어온다.
@@ -67,7 +80,11 @@ def inference(data_dir, model_dir, output_dir, args):
 
     # 이미지 경로를 리스트로 생성한다.
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
-    dataset = TestDataset(img_paths, args.resize)
+    df = pd.DataFrame(img_paths, columns=['Image_path'])
+    basic_augmentation_module = getattr(import_module("dataset"), "BasicAugmentation") # for val
+    basic_transform = basic_augmentation_module(args.resize)
+    
+    dataset = CustomDataset(df, basic_transform, test= True)
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -88,7 +105,7 @@ def inference(data_dir, model_dir, output_dir, args):
 
     # 예측 결과를 데이터프레임에 저장하고 csv 파일로 출력한다.
     info["ans"] = preds
-    save_path = os.path.join(output_dir, f"output.csv")
+    save_path = os.path.join(model_dir, f"output.csv")
     info.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
 
@@ -96,23 +113,32 @@ def inference(data_dir, model_dir, output_dir, args):
 if __name__ == "__main__":
     # 커맨드 라인 인자를 파싱한다.
     parser = argparse.ArgumentParser()
+    
+    parser.add_argument(
+        "--model_dir",
+        type=str,
+        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp"),
+    )
+    
+    pre_args = parser.parse_args()
+    
+    config = load_config(pre_args.model_dir)
+    parser.set_defaults(**config) # 기존 config 파일의 정보로 학습 시작 
 
     # 데이터와 모델 체크포인트 디렉터리 관련 인자
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=1000,
         help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
         "--resize",
         nargs=2,
         type=int,
-        default=(256, 256),
         help="resize size for image when you trained (default: (96, 128))",
     )
     parser.add_argument(
-        "--model", type=str, default="MyModel", help="model type (default: BaseModel)"
+        "--model", type=str, help="model type (default: BaseModel)"
     )
 
     # 컨테이너 환경 변수
@@ -121,26 +147,21 @@ if __name__ == "__main__":
         type=str,
         default=os.environ.get("SM_CHANNEL_EVAL", "./Data/eval/"),
     )
-    parser.add_argument(
-        "--model_dir",
-        type=str,
-        default=os.environ.get("SM_CHANNEL_MODEL", "./model/exp"),
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
-    )
+    # parser.add_argument(
+    #     "--output_dir",
+    #     type=str,
+    #     default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
+    # )
 
     args = parser.parse_args()
 
     data_dir = args.data_dir
     model_dir = args.model_dir
-    output_dir = args.output_dir
+    # output_dir = args.output_dir
 
-    os.makedirs(output_dir, exist_ok=True)
+    # os.makedirs(output_dir, exist_ok=True)
 
     # 모델 추론을 수행한다.
-    inference(data_dir, model_dir, output_dir, args)
+    inference(data_dir, model_dir, args)
     
-    #/opt/conda/bin/python /data/ephemeral/home/level1-imageclassification-cv-05/EHmin/BaselineCode/inference.py
+    #/opt/conda/bin/python /data/ephemeral/home/level1-imageclassification-cv-05/EHmin/MyBase/inference.py --model_dir=./model/exp
