@@ -7,7 +7,7 @@ import numpy as np
 
 class CustomDataset(Dataset):
     
-    def __init__(self, dataframe, transform=None):
+    def __init__(self, dataframe, transform=None, test= False):
         """
         Custom dataset that accepts a DataFrame, a transformation function, and returns images and labels.
         
@@ -16,6 +16,7 @@ class CustomDataset(Dataset):
         """
         self.dataframe = dataframe
         self.transform = transform
+        self.test = test
 
     def __len__(self):
         return len(self.dataframe)
@@ -34,6 +35,9 @@ class CustomDataset(Dataset):
         # Apply transformations if any
         if self.transform:
             image = self.transform(image=np.array(image))['image']  # Convert to numpy array and apply transform
+            
+        if self.test:
+            return image
         
         # Get labels from the dataframe
         mask_label = torch.tensor(self.dataframe.iloc[idx]['Mask_label'], dtype=torch.long)
