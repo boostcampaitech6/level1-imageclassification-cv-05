@@ -4,6 +4,8 @@ from collections import defaultdict
 from enum import Enum
 from typing import Tuple, List
 
+import cv2
+
 import numpy as np
 import torch
 from PIL import Image
@@ -45,6 +47,45 @@ def is_image_file(filename):
     """
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
+class FaceCropTransform:
+    """얼굴을 탐지하여 크롭하는 커스텀 변환"""
+
+    def __init__(self):
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+    def __call__(self, img):
+        # 이미지를 OpenCV 형식으로 변환
+        cv_image = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        
+        # 얼굴 탐지
+        faces = self.face_cascade.detectMultiScale(cv_image, 1.1, 4)
+        if len(faces) == 0:
+            return img  # 얼굴이 탐지되지 않은 경우 원본 이미지 반환
+
+        # 첫 번째 탐지된 얼굴을 크롭
+        x, y, w, h = faces[0]
+        face_crop = cv_image[y:y+h, x:x+w]
+
+        # PIL 이미지로 다시 변환
+        face_crop_pil = Image.fromarray(cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB))
+        return face_crop_pil
+
+class FaceAugmentation:
+    """커스텀 Augmentation을 담당하는 클래스"""
+
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose(
+            [
+                FaceCropTransform(),  # 얼굴 탐지 및 크롭
+                Resize(resize),  # 리사이징
+                ToTensor(),  # 텐서로 변환
+                Normalize(mean=mean, std=std),  # 정규화
+            ]
+        )
+
+    def __call__(self, image):
+        return self.transform(image)
+
 class NoAugmentation:
     """
     기본적인 Augmentation을 담당하는 클래스
@@ -64,9 +105,9 @@ class NoAugmentation:
             [
                 Resize(resize, Image.BILINEAR),
                 # ColorJitter(0.1, 0.1, 0.1, 0.1),
-                RandomHorizontalFlip(), # 0.5 확률 좌우반전 추가
+                # RandomHorizontalFlip(), # 0.5 확률 좌우반전 추가
                 ToTensor(),
-                # Normalize(mean=mean, std=std),
+                Normalize(mean=mean, std=std),
                 # AddGaussianNoise(),
                 
             ]

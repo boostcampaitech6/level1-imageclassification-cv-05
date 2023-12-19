@@ -155,6 +155,16 @@ def train(data_dir, model_dir, args):
     n_val = int(len(dataset) * 0.2)
     n_train = len(dataset) - n_val
     train_set, val_set = random_split(dataset, [n_train, n_val])
+    # train_set = dataset
+    
+    # val_set = getattr(
+    #     import_module("dataset"), args.dataset
+    # )  # default: MaskBaseDataset
+    # val_set = dataset_module(
+    #     data_dir="../../Data/eval/parent",
+    # )
+    # val_set.set_transform(transform_C)
+    
 
     train_loader = DataLoader(
         train_set,
