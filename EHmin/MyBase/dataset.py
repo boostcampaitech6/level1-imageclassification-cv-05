@@ -67,7 +67,11 @@ class CustomAugmentation:
     def __init__(self, resize):
         self.transform = A.Compose(
             [
-                A.Resize(resize[0],resize[1]),
+                # A.CenterCrop(height=300, width=300),
+                A.Resize(resize[0],resize[1]), # Image.BILINEAR is `interpolation=1` in Albumentations
+                A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+                A.Rotate(limit=10),
+                A.HorizontalFlip(p=1),  # p=1 means the flip is applied to all images
                 A.Normalize(),
                 ToTensorV2()
             ]

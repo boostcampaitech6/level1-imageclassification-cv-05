@@ -142,3 +142,5 @@ if __name__ == "__main__":
 
     # 모델 추론을 수행한다.
     inference(data_dir, model_dir, output_dir, args)
+    
+    #/opt/conda/bin/python /data/ephemeral/home/level1-imageclassification-cv-05/EHmin/BaselineCode/inference.py
