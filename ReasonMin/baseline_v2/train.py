@@ -113,14 +113,24 @@ def train(data_dir, model_dir, args):
     df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.multi_class_labels})
     df['age'] = df['img_path'].apply(lambda x: x.split('/')[-2][-2:])
 
-    ignore_age = df[('55'< df['age']) & (df['age'] <'60')]
-    df = df[(55 >= df['age'].astype(int)) | (df['age'].astype(int) >= 60)]
 
+    # 56~59세는 train에서 제외
+    ignore_age = df[('55'< df['age']) & (df['age'] <'60')]                  
+    df = df[(55 >= df['age'].astype(int)) | (df['age'].astype(int) >= 60)]  
+
+    # 나머지 나이만 train-val로 split
+    # 56~59세는 val로만 배정
     train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
-    train_df_young_age_all = train_df[train_df['label'].isin([0, 3, 6, 9, 12, 15])]   
+    val_df = pd.concat([val_df, ignore_age], ignore_index=True)
+
+
+    #group별 구분
+    train_df_young_age_male = train_df[train_df['label'].isin([0, 6, 12])]
+    train_df_young_age_female = train_df[train_df['label'].isin([3, 9, 15])]   
     train_df_middle_age_male = train_df[train_df['label'].isin([1, 7, 13])] 
     train_df_middle_age_female = train_df[train_df['label'].isin([4, 10, 16])]  
-    train_df_old_age_all = train_df[train_df['label'].isin([2, 5, 8, 11, 14, 17])]  
+    train_df_old_age_male = train_df[train_df['label'].isin([2, 8, 14])]
+    train_df_old_age_female = train_df[train_df['label'].isin([5, 11, 17])]
 
     # augmentation에 전달
     transform_module = getattr(import_module("dataset"), "None_aug") 
@@ -158,6 +168,20 @@ def train(data_dir, model_dir, args):
         std=dataset.std        
     )
 
+    transform_module = getattr(import_module("dataset"), "ColorJitter_aug_for_male") 
+    ColorJitter_aug_for_male = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std        
+    )
+
+    transform_module = getattr(import_module("dataset"), "ColorJitter_aug_for_female") 
+    ColorJitter_aug_for_female = transform_module(
+        resize=args.resize,
+        mean=dataset.mean,
+        std=dataset.std        
+    )
+
     transform_module = getattr(import_module("dataset"), "Grayscale_aug") 
     Grayscale_aug = transform_module(
         resize=args.resize,
@@ -165,8 +189,8 @@ def train(data_dir, model_dir, args):
         std=dataset.std        
     )
 
-    transform_module = getattr(import_module("dataset"), "Sharpness_aug") 
-    Sharpness_aug = transform_module(
+    transform_module = getattr(import_module("dataset"), "Sharpness_augmix") 
+    Sharpness_augmix = transform_module(
         resize=args.resize,
         mean=dataset.mean,
         std=dataset.std        
@@ -174,32 +198,52 @@ def train(data_dir, model_dir, args):
 
     
     # 그룹별 이미지 주소와 label 받아오기
-    train_young_age_all_path, train_young_age_all_label        = train_df_young_age_all["img_path"].values,      train_df_young_age_all["label"].values
-    train_middle_age_male_path, train_middle_age_male_label   = train_df_middle_age_male["img_path"].values,     train_df_middle_age_male["label"].values
-    train_middle_age_female_path, train_middle_age_female_label = train_df_middle_age_female["img_path"].values, train_df_middle_age_female["label"].values
-    train_old_age_all_path, train_old_age_all_label            = train_df_old_age_all["img_path"].values,        train_df_old_age_all["label"].values
+    train_young_age_male_path, train_young_age_male_label        = train_df_young_age_male["img_path"].values,    train_df_young_age_male["label"].values
+    train_young_age_female_path, train_young_age_female_label    = train_df_young_age_female["img_path"].values,  train_df_young_age_female["label"].values
+    train_middle_age_male_path, train_middle_age_male_label   = train_df_middle_age_male["img_path"].values,      train_df_middle_age_male["label"].values
+    train_middle_age_female_path, train_middle_age_female_label = train_df_middle_age_female["img_path"].values,  train_df_middle_age_female["label"].values
+    train_old_age_male_path, train_old_age_male_label            = train_df_old_age_male["img_path"].values,      train_df_old_age_male["label"].values
+    train_old_age_female_path, train_old_age_female_label        = train_df_old_age_female["img_path"].values,    train_df_old_age_female["label"].values
 
     train_dataset = []
     
     # 원본 이미지
-    train_dataset.append(CustomDataset(train_young_age_all_path, train_young_age_all_label, None_aug))
+    train_dataset.append(CustomDataset(train_young_age_male_path, train_young_age_male_label, None_aug))
+    train_dataset.append(CustomDataset(train_young_age_female_path, train_young_age_female_label, None_aug))
     train_dataset.append(CustomDataset(train_middle_age_male_path, train_middle_age_male_label, None_aug))
     train_dataset.append(CustomDataset(train_middle_age_female_path, train_middle_age_female_label, None_aug))
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, None_aug))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, None_aug))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, None_aug))
 
-    #중년 남성 증강 3배
+    #청년 남성 밝기, 채도 변화
+    train_dataset.append(CustomDataset(train_young_age_male_path, train_young_age_male_label, ColorJitter_aug_for_male))
+
+    #청년 여성 밝기, 채도 변화
+    train_dataset.append(CustomDataset(train_young_age_female_path, train_young_age_female_label, ColorJitter_aug_for_female))
+
+    #중년 남성 증강 4배
     train_dataset.append(CustomDataset(train_middle_age_male_path, train_middle_age_male_label, Horizontal_Rotate_aug))
     train_dataset.append(CustomDataset(train_middle_age_male_path, train_middle_age_male_label, ColorJitter_Flip_aug))
+    train_dataset.append(CustomDataset(train_middle_age_male_path, train_middle_age_male_label, Grayscale_aug))
 
     #중년 여성 증강 2배
     train_dataset.append(CustomDataset(train_middle_age_female_path, train_middle_age_female_label, Horizontal_Rotate_aug))
 
-    #노년 남성/여성 증강 6배
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, Horizontal_Rotate_aug))
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, ColorJitter_Flip_aug))
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, ColorJitter_aug))
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, Grayscale_aug))
-    train_dataset.append(CustomDataset(train_old_age_all_path, train_old_age_all_label, Sharpness_aug))
+    #노년 남성 증강 7배
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, Horizontal_Rotate_aug))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, ColorJitter_Flip_aug))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, ColorJitter_aug))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, Grayscale_aug))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, Sharpness_augmix))
+    train_dataset.append(CustomDataset(train_old_age_male_path, train_old_age_male_label, ColorJitter_aug_for_male))
+
+    #노년 여성 증강 7배
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, Horizontal_Rotate_aug))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, ColorJitter_Flip_aug))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, ColorJitter_aug))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, Grayscale_aug))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, Sharpness_augmix))
+    train_dataset.append(CustomDataset(train_old_age_female_path, train_old_age_female_label, ColorJitter_aug_for_female))
 
     train_set = ConcatDataset(train_dataset)
 
@@ -210,15 +254,19 @@ def train(data_dir, model_dir, args):
     #인덱스 잘 받아오는지 확인    
     print("_____df_______ :\n", df)
     print("__ignore_age___ :\n",ignore_age)
+    print("___val df____ :\n",val_df)
     print("__55세 출력__",df[df['age'].astype(int)==55])
     print("__56세 출력__",df[df['age'].astype(int)==56])
     print("__57세 출력__",df[df['age'].astype(int)==57])
     print("__58세 출력__",df[df['age'].astype(int)==58])
     print("__59세 출력__",df[df['age'].astype(int)==59])
-    print("___청년________\n", len(train_df_young_age_all)//7, train_df_young_age_all.head())
+    print("_val_59세 출력_\n",val_df[val_df['age'].astype(int)==59])
+    print("___청년 남성___\n", len(train_df_young_age_male)//7, train_df_young_age_male.head())
+    print("___청년 여성___\n", len(train_df_young_age_female)//7, train_df_young_age_female.head())
     print("___중년 남성___\n", len(train_df_middle_age_male)//7, train_df_middle_age_male.head())
     print("___중년 여성___\n", len(train_df_middle_age_female)//7,train_df_middle_age_female.head())
-    print("___노년________\n", len(train_df_old_age_all)//7, train_df_old_age_all.head())
+    print("___노년 남성___\n", len(train_df_old_age_male)//7, train_df_old_age_male.head())
+    print("___노년 여성___\n", len(train_df_old_age_female)//7, train_df_old_age_female.head())
     print("__total__: ", len(train_set)+len(val_set) , ",  __train__ : ", len(train_set), ",  __val__ : ",len(val_set))
     
     #train : 15120,  val : 3780, total : 18900, changed : 29658
@@ -256,7 +304,7 @@ def train(data_dir, model_dir, args):
         lr=args.lr,
         weight_decay=5e-4,
     )
-    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.2)
+    scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     # -- logging
     logger = SummaryWriter(log_dir=save_dir)
@@ -360,18 +408,18 @@ if __name__ == "__main__":
 
     # Data and model checkpoints directories
     parser.add_argument("--seed", type=int, default=42, help="random seed (default: 42)")
-    parser.add_argument("--epochs", type=int, default=6, help="number of epochs to train (default: 1)")
+    parser.add_argument("--epochs", type=int, default=8, help="number of epochs to train (default: 1)")
     #parser.add_argument("--dataset", type=str, default="MaskBaseDataset", help="dataset augmentation type (default: MaskBaseDataset)",)
     #parser.add_argument("--augmentation", type=str, default="BaseAugmentation", help="data augmentation type (default: BaseAugmentation)",)
     parser.add_argument("--resize", nargs=2, type=int, default=[224, 224], help="resize size for image when training",)
-    parser.add_argument("--batch_size", type=int, default=64, help="input batch size for training (default: 64)",)
+    parser.add_argument("--batch_size", type=int, default=128, help="input batch size for training (default: 64)",)
     parser.add_argument("--valid_batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",)
-    parser.add_argument("--model", type=str, default="swin_tranformer", help="model type (default: BaseModel)")
+    parser.add_argument("--model", type=str, default="efficient", help="model type (default: BaseModel)")
     parser.add_argument("--optimizer", type=str, default="AdamW", help="optimizer type (default: SGD)")
     parser.add_argument("--lr", type=float, default=1e-4, help="learning rate (default: 1e-3)")
-    parser.add_argument("--val_ratio", type=float, default=0.2, help="ratio for validaton (default: 0.2)",)
-    parser.add_argument("--criterion", type=str, default="focal", help="criterion type (default: cross_entropy)",)
-    parser.add_argument("--lr_decay_step", type=int, default=2, help="learning rate scheduler deacy step (default: 20)",)
+    parser.add_argument("--val_ratio", type=float, default=0.1, help="ratio for validaton (default: 0.2)",)
+    parser.add_argument("--criterion", type=str, default="f1", help="criterion type (default: cross_entropy)",)
+    parser.add_argument("--lr_decay_step", type=int, default=6, help="learning rate scheduler deacy step (default: 20)",)
     parser.add_argument("--log_interval", type=int, default=20, help="how many batches to wait before logging training status",)
     parser.add_argument("--name", default="exp", help="model save at {SM_MODEL_DIR}/{name}")
 

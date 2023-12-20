@@ -15,7 +15,9 @@ from torchvision.transforms import (
     Compose,
     RandomAdjustSharpness,
     ColorJitter,
+    AugMix,
     Grayscale,
+    RandomGrayscale,
     RandomRotation,
     RandomHorizontalFlip
 )
@@ -546,7 +548,7 @@ class Horizontal_Rotate_aug:
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
             RandomHorizontalFlip(p=1),
-            RandomRotation(10),
+            RandomRotation(20),
             ToTensor(),
             Normalize(mean=mean, std=std),
         ])
@@ -557,7 +559,7 @@ class Rotate_aug:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
-            RandomRotation(10),
+            RandomRotation(20),
             RandomHorizontalFlip(p=0.1),
             ToTensor(),
             Normalize(mean=mean, std=std),
@@ -589,6 +591,28 @@ class ColorJitter_aug:
     def __call__(self, image):
         return self.transform(image)
     
+class ColorJitter_aug_for_male:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.2, 0, 0.2, 0.2),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
+class ColorJitter_aug_for_female:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomGrayscale(p=0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
 class Grayscale_aug:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
@@ -601,12 +625,13 @@ class Grayscale_aug:
     def __call__(self, image):
         return self.transform(image)  
 
-class Sharpness_aug:
+class Sharpness_augmix:
     def __init__(self, resize, mean, std, **args):
         self.transform = Compose([
             Resize(resize, Image.BILINEAR),
             RandomAdjustSharpness(sharpness_factor=0.5, p=1),
             RandomHorizontalFlip(p=0.1),
+            AugMix(1, 2, -1, 0.5, True),
             ToTensor(),
             Normalize(mean=mean, std=std), 
         ])
