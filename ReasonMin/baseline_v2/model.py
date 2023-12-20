@@ -72,7 +72,7 @@ class MyModel(nn.Module):
         2. 결과로 나온 output 을 return 해주세요
         """
         return x
-'''
+''' 
 class VIT(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
@@ -84,5 +84,25 @@ class VIT(nn.Module):
         x = self.model(x)
         return x
     
+class efficient(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model('efficientnet_b3a', pretrained=True)
+        in_features = self.model.classifier.in_features
+        self.model.classifier = nn.Linear(in_features, num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
+    
+class swin_tranformer(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model(model_name= 'swin_small_patch4_window7_224', pretrained=True)
+        self.model.head.fc = nn.LazyLinear(num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
 
 
