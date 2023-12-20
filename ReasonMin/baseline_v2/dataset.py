@@ -83,7 +83,7 @@ class BaseAugmentation:
         Returns:
             Tensor: Argumentation이 적용된 이미지
         """
-        return self.transform(image=image)
+        return self.transform(image)
 
 
 class AddGaussianNoise(object):
@@ -100,24 +100,88 @@ class AddGaussianNoise(object):
         return self.__class__.__name__ + "(mean={0}, std={1})".format(
             self.mean, self.std
         )
+    
 
+##############################################################
+    '''
+class any_age_augmentation:  # 그대로 출력
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
 
-class CustomAugmentation:
+    def __call__(self, image):
+        return self.transform(image)
+
+class middle_age_male_augmentation:  # 3배 증강
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+    
+class middle_age_female_augmentation:  # 2배 증강
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+    
+class old_age_augmentation:  # 6배 증강
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class CustomAugmentation_for_middle_age_male:    
     """커스텀 Augmentation을 담당하는 클래스"""
 
     def __init__(self, resize, mean, std, **args):
-        self.transform = Compose(
+        self.transform_for_middle_age_male = Compose(   #middle_age_male date_set을 2배 증강
             [
-                CenterCrop((320, 400)),
                 Resize(resize, Image.BILINEAR),
                 RandomHorizontalFlip(p=0.5),
                 RandomRotation(10),
-                ColorJitter(0.1, 0.1, 0.1, 0.1),
-                #RandomGrayscale(p=0.5),
                 ToTensor(),
                 Normalize(mean=[0.485, 0.456, 0.406],
-                          std=[0.229, 0.224, 0.225]),
-                #AddGaussianNoise()
+                          std=[0.229, 0.224, 0.225])
+            ]
+        )
+
+    def __call__(self, image):
+    #    if (30 <= age_label and age_label < 60) and gender_label == 'male':
+    #        return self.transform_for_middle_age_male(image)
+    #    elif 60 <= age_label:
+    #        return self.transform_for_old_age_all(image)
+    #    else:
+        return self.transform_for_any(image)
+    '''
+    ##################################################################
+        
+class CustomAugmentation:    
+    """커스텀 Augmentation을 담당하는 클래스"""
+
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose(   
+            [
+                Resize(resize, Image.BILINEAR),
+                RandomRotation(10),
+                ToTensor(),
             ]
         )
 
@@ -179,7 +243,7 @@ class AgeLabels(int, Enum):
 class MaskBaseDataset(Dataset):
     """마스크 데이터셋의 기본 클래스"""
 
-    num_classes = 3 * 2 * 3
+    num_classes = 3   ### age 판별용
 
     _file_names = {
         "mask1": MaskLabels.MASK,
@@ -366,7 +430,8 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         profiles = [profile for profile in profiles if not profile.startswith(".")]
 
         ##################################################
-        # 53~39세 사람을 모두 "val"에 넣는다.
+        '''
+        # 53~39세 사람 모두 train에서 제외. "val"에 넣는다. 
         middle_age, other_age =[], []
         for folder_name in profiles:
             id, gender, race, age = profile.split("_")
@@ -378,9 +443,9 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
         split_profiles = self._split_profile(other_age, self.val_ratio)
         split_profiles["val"] += middle_age
         ##################################################
-
+        '''
         cnt = 0
-        for phase, indices in split_profiles.items():
+        for phase, indices in profiles.items():
             for _idx in indices:
                 profile = profiles[_idx]
                 img_folder = os.path.join(self.data_dir, profile)
@@ -438,4 +503,25 @@ class TestDataset(Dataset):
 
     def __len__(self):
         """데이터셋의 길이를 반환하는 메서드"""
+        return len(self.img_paths)
+
+########################################################################
+
+class CustomDataset(Dataset):
+    def __init__(self, img_paths, labels, transforms=None):
+        self.img_paths = img_paths
+        self.labels = labels
+        self.transforms = transforms
+
+    def __getitem__(self, index):
+        img_path = self.img_paths[index]
+        image = Image.open(img_path)
+        
+        if self.transforms is not None:
+            image = self.transforms(image)
+
+        label = self.labels[index]
+        return image, label
+    
+    def __len__(self):
         return len(self.img_paths)

@@ -18,6 +18,9 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import MaskBaseDataset
 from loss import create_criterion
 
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -99,22 +102,40 @@ def train(data_dir, model_dir, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # -- dataset
-    dataset_module = getattr(
-        import_module("dataset"), args.dataset
-    )  # default: MaskBaseDataset
-    dataset = dataset_module(
-        data_dir=data_dir,
-    )
+    dataset_module = getattr(import_module("dataset"), "MaskBaseDataset")  # default: MaskBaseDataset
+    dataset = dataset_module(data_dir=data_dir, )
     num_classes = dataset.num_classes  # 18
 
+    ################################################################
+    #df = pd.DataFrame({'img_path' : dataset.image_paths, 'label' :dataset.age_labels})
+    #train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
+    #train_df_young_age_all = train_df[train_df['label'].isin([0, 3, 6, 9, 12, 15])]   
+    #train_df_middle_age_male = train_df[train_df['label'].isin([1, 7, 13])] 
+    #train_df_middle_age_female = train_df[train_df['label'].isin([4, 10, 16])]  
+    #train_df_old_age_all = train_df[train_df['label'].isin([2, 5, 8, 11, 14, 17])]  
+
+    # my augmentation
+    #transform_module = getattr(import_module("dataset"), args.augmentation) 
+    #transform = transform_module(
+    #    resize=args.resize,
+    #    mean=dataset.mean,
+    #    std=dataset.std        
+    #)
+
+
+
+
+
+    ################################################################
     # -- augmentation
     transform_module = getattr(
-        import_module("dataset"), args.augmentation
+        import_module("dataset"), args.augmentation       
     )  # default: BaseAugmentation
     transform = transform_module(
         resize=args.resize,
         mean=dataset.mean,
-        std=dataset.std,
+        std=dataset.std     
+        
     )
     dataset.set_transform(transform)
 
@@ -287,7 +308,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--augmentation",
         type=str,
-        default="CustomAugmentation",
+        default="BaseAugmentation",  ########################### 여기 수정 ##########################
         help="data augmentation type (default: BaseAugmentation)",
     )
     parser.add_argument(
@@ -310,7 +331,7 @@ if __name__ == "__main__":
         help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="VIT", help="model type (default: BaseModel)"
+        "--model", type=str, default="efficient", help="model type (default: BaseModel)"
     )
     parser.add_argument(
         "--optimizer", type=str, default="AdamW", help="optimizer type (default: SGD)"
@@ -327,7 +348,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--criterion",
         type=str,
-        default="cross_entropy",
+        default="focal",
         help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
