@@ -30,3 +30,47 @@ class CustomModel(nn.Module):
         """
         x = self.model(x)
         return x
+    
+    
+class MultiLabelModel(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+
+        # self.model = timm.create_model(model_name='mobilenetv3_small_050', pretrained=True)
+        self.model = timm.create_model(model_name= 'swinv2_base_window8_256', pretrained=True)
+        # self.model.head.fc = nn.LazyLinear(num_classes)
+        
+        # self.mask_head = self.model.head
+        self.mask_head = nn.LazyLinear(3)
+        
+        # self.gender_head = self.model.head
+        self.gender_head = nn.LazyLinear(2)
+        
+        # self.age_head = self.model.head
+        self.age_head = nn.LazyLinear(3)
+        
+        # del self.model.head
+        
+        
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        # classifier 의 파라미터는 훈련을 통해 업데이트되도록 설정
+        for param in [self.mask_head, self.gender_head, self.age_head]:
+            param.requires_grad = True
+
+    def forward(self, x):
+        """
+        1. 위에서 정의한 모델 아키텍쳐를 forward propagation 을 진행해주세요
+        2. 결과로 나온 output 을 return 해주세요
+        """
+        x = self.model(x)
+        
+        mask = self.mask_head(x)
+        gender = self.gender_head(x)
+        age = self.age_head(x)
+        
+        return mask, gender, age
+    
+# m = MultiLabelModel(18)
+# print(m)
