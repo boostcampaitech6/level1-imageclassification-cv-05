@@ -13,9 +13,9 @@ from torchvision.transforms import (
     ToTensor,
     Normalize,
     Compose,
-    CenterCrop,
+    RandomAdjustSharpness,
     ColorJitter,
-    RandomGrayscale,
+    Grayscale,
     RandomRotation,
     RandomHorizontalFlip
 )
@@ -243,7 +243,7 @@ class AgeLabels(int, Enum):
 class MaskBaseDataset(Dataset):
     """마스크 데이터셋의 기본 클래스"""
 
-    num_classes = 3   ### age 판별용
+    num_classes = 18  
 
     _file_names = {
         "mask1": MaskLabels.MASK,
@@ -259,6 +259,7 @@ class MaskBaseDataset(Dataset):
     mask_labels = []
     gender_labels = []
     age_labels = []
+    multi_class_labels = []
 
     def __init__(
         self,
@@ -304,6 +305,7 @@ class MaskBaseDataset(Dataset):
                 self.mask_labels.append(mask_label)
                 self.gender_labels.append(gender_label)
                 self.age_labels.append(age_label)
+                self.multi_class_labels.append(self.encode_multi_class(mask_label, gender_label, age_label)) #18개 label로 변환
 
     def calc_statistics(self):
         """데이터셋의 통계치를 계산하는 메서드"""
@@ -440,12 +442,14 @@ class MaskSplitByProfileDataset(MaskBaseDataset):
             else:
                 other_age.append(folder_name)
 
+        #train_df, val_df, _, _ = train_test_split(df, df['label'].values, test_size=args.val_ratio, random_state=args.seed, stratify=df['label'].values)
         split_profiles = self._split_profile(other_age, self.val_ratio)
         split_profiles["val"] += middle_age
         ##################################################
         '''
+        
         cnt = 0
-        for phase, indices in profiles.items():
+        for phase, indices in split_profiles.items():
             for _idx in indices:
                 profile = profiles[_idx]
                 img_folder = os.path.join(self.data_dir, profile)
@@ -525,3 +529,86 @@ class CustomDataset(Dataset):
     
     def __len__(self):
         return len(self.img_paths)
+
+class None_aug:    # 원본 이미지 반환
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+
+    def __call__(self, image):
+        return self.transform(image)
+
+class Horizontal_Rotate_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomHorizontalFlip(p=1),
+            RandomRotation(10),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
+class Rotate_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomRotation(10),
+            RandomHorizontalFlip(p=0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
+class ColorJitter_Flip_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            RandomHorizontalFlip(p=0.5),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
+class ColorJitter_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            ColorJitter(0.5, 0.5, 0.5, 0.5),
+            RandomHorizontalFlip(p=0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)
+    
+class Grayscale_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            Grayscale(num_output_channels = 3),
+            RandomHorizontalFlip(p=0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std),
+        ])
+    def __call__(self, image):
+        return self.transform(image)  
+
+class Sharpness_aug:
+    def __init__(self, resize, mean, std, **args):
+        self.transform = Compose([
+            Resize(resize, Image.BILINEAR),
+            RandomAdjustSharpness(sharpness_factor=0.5, p=1),
+            RandomHorizontalFlip(p=0.1),
+            ToTensor(),
+            Normalize(mean=mean, std=std), 
+        ])
+    def __call__(self, image):
+        return self.transform(image)

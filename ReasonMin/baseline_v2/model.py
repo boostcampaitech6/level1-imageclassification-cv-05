@@ -94,5 +94,15 @@ class efficient(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x
+    
+class swin_tranformer(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = timm.create_model(model_name= 'swin_small_patch4_window7_224', pretrained=True)
+        self.model.head.fc = nn.LazyLinear(num_classes)
+
+    def forward(self, x):
+        x = self.model(x)
+        return x
 
 
