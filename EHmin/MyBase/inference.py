@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from dataset import CustomDataset
+import pickle
 
 # from dataset import TestDataset, MaskBaseDataset
 
@@ -100,7 +101,8 @@ def inference(data_dir, model_dir, args):
         for idx, images in enumerate(loader):
             images = images.to(device)
             pred = model(images)
-            pred = pred.argmax(dim=-1)
+            # 정답을 만들때는 반드시 아래의 주석을 풀어줄 것!!!. 앙상블을 위해서 아래의 코드를 주석처리함!
+            # pred = pred.argmax(dim=-1)
             preds.extend(pred.cpu().numpy())
 
     # 예측 결과를 데이터프레임에 저장하고 csv 파일로 출력한다.
@@ -108,7 +110,13 @@ def inference(data_dir, model_dir, args):
     save_path = os.path.join(model_dir, f"output.csv")
     info.to_csv(save_path, index=False)
     print(f"Inference Done! Inference result saved at {save_path}")
+    
+    # 리스트를 pickle 파일로 저장
+    save_path = os.path.join(model_dir, f"my_list.pkl")
+    with open(save_path, 'wb') as file:
+        pickle.dump(preds, file)
 
+    print("List saved to pickle file.")
 
 if __name__ == "__main__":
     # 커맨드 라인 인자를 파싱한다.
