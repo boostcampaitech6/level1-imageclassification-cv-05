@@ -98,3 +98,23 @@ class BasicAugmentation:
 
     def __call__(self, image):
         return self.transform(image= image)
+    
+class CustomAugmentation2:
+    """커스텀 Augmentation을 담당하는 클래스"""
+
+    def __init__(self, resize):
+        self.transform = A.Compose(
+            [   
+                A.Resize(resize[0], resize[1]),  # 이미지 크기 조정
+                A.OneOf([
+                    A.GaussianBlur(blur_limit=(3, 7), p=0.5),  # 가우시안 블러
+                    A.GridDistortion(num_steps=5, distort_limit=0.2, p=0.5),  # 그리드 왜곡
+                    A.Cutout(num_holes=8, max_h_size=8, max_w_size=8, fill_value=0, p=0.5)  # 컷아웃
+                ], p=1),
+                A.Normalize(),  # 정규화
+                ToTensorV2()  # 텐서 변환
+            ]
+        )
+
+    def __call__(self, image):
+        return self.transform(image= image)

@@ -52,12 +52,10 @@ class MultiLabelModel(nn.Module):
         # del self.model.head
         
         
-        for param in self.model.parameters():
-            param.requires_grad = False
+        # for param in self.model.parameters():
+        #     param.requires_grad = False
 
         # classifier 의 파라미터는 훈련을 통해 업데이트되도록 설정
-        for param in [self.mask_head, self.gender_head, self.age_head]:
-            param.requires_grad = True
 
     def forward(self, x):
         """

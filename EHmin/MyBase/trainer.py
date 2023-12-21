@@ -181,7 +181,7 @@ class MultiLabelTrainer:
                 mask_preds = torch.argmax(mask_out, dim=-1)
                 gender_preds = torch.argmax(gender_out, dim=-1)
                 age_preds = torch.argmax(age_out, dim=-1)
-                preds = 6*mask_preds + 2*gender_preds + age_preds
+                preds = 6*mask_preds + 3*gender_preds + age_preds
                 # loss = self.criterion(outs, labels)
                 # 각 출력에 대한 손실 계산
                 loss_mask = self.criterion_mask(mask_out, mask_label)
@@ -255,7 +255,7 @@ class MultiLabelTrainer:
                 mask_preds = torch.argmax(mask_out, dim=-1)
                 gender_preds = torch.argmax(gender_out, dim=-1)
                 age_preds = torch.argmax(age_out, dim=-1)
-                preds = 6*mask_preds + 2*gender_preds + age_preds
+                preds = 6*mask_preds + 3*gender_preds + age_preds
 
                 loss_mask_item = self.criterion_mask(mask_out, mask_label).item()
                 loss_gender_item = self.criterion_gender(gender_out, gender_label).item()

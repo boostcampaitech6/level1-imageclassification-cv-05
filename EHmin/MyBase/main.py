@@ -58,6 +58,8 @@ def main(args):
     # Transform 설정 
     custom_augmentation_module = getattr(import_module("dataset"), args.augmentation) # for training
     transform = custom_augmentation_module(args.resize)
+    custom_augmentation_module = getattr(import_module("dataset"), "CustomAugmentation2") # for training
+    transform2 = custom_augmentation_module(args.resize)
     basic_augmentation_module = getattr(import_module("dataset"), "BasicAugmentation") # for val
     basic_transform = basic_augmentation_module(args.resize)
     
@@ -65,7 +67,9 @@ def main(args):
     custom_dataset_module = getattr(import_module("dataset"), args.dataset) 
     train_dataset = custom_dataset_module(train_df,transform)
     train_dataset2 = custom_dataset_module(train_df,basic_transform)
-    train_dataset = train_dataset + train_dataset2
+    train_dataset3 = custom_dataset_module(train_df,transform2)
+    
+    train_dataset = train_dataset + train_dataset2 + train_dataset3
     
     val_dataset = custom_dataset_module(val_df,basic_transform)
     
@@ -79,6 +83,10 @@ def main(args):
     model = torch.nn.DataParallel(model)
     
     # Train set 
+    # weight = torch.tensor([0.0040, 0.0044, 0.0059, 0.0079, 0.0198, 0.0198, 0.0221, 0.0221, 0.0295,
+    #     0.0295, 0.0297, 0.0390, 0.0395, 0.0395, 0.1485, 0.1485, 0.1951, 0.1951])
+    # weight = weight.to(device)
+    # criterion = create_criterion(args.criterion, weight=weight.to(device))
     criterion = create_criterion(args.criterion)
     opt_module = getattr(import_module("torch.optim"), args.optimizer)
     optimizer = opt_module(
