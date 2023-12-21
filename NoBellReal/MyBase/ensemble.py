@@ -6,7 +6,7 @@ from scipy.stats import mode
 import argparse
 
 # 기본 모델 디렉토리 경로
-BASE_MODEL_DIRECTORIES = ['./model/exp', './model/exp2', './model/exp3']
+BASE_MODEL_DIRECTORIES = ['./model/taemin', './model/yumin1', './model/yumin2', './model/yumin3', './model/eunsung', './model/jongjin']
 
 def load_pickle(file_path):
     """Pickle 파일에서 데이터를 로드합니다."""
@@ -30,7 +30,7 @@ def soft_voting(*prob_files):
 
 def main(args):
     if args.ensemble_method == 'hard_voting':
-        file_name = 'output.csv'
+        file_name = 'output_hard.csv'
     else:
         file_name = 'my_list.pkl'
 

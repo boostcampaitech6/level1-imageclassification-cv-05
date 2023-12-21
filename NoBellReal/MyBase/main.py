@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument(
-        "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "./Data/train/images"),
+        "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "/data/ephemeral/home/level1-imageclassification-cv-05/Data/train/images"),
     )
     parser.add_argument(
         "--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./model")

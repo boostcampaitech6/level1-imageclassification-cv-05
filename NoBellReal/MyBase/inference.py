@@ -103,7 +103,7 @@ def inference(data_dir, model_dir, args):
             pred = model(images)
             # 정답을 만들때는 반드시 아래의 주석을 풀어줄 것!!!. 앙상블을 위해서 아래의 코드를 주석처리함!
             # if not (args.ensemble_boolean) : 
-            #    pred = pred.argmax(dim=-1)
+            # pred = pred.argmax(dim=-1)
             preds.extend(pred.cpu().numpy())
 
     # 예측 결과를 데이터프레임에 저장하고 csv 파일로 출력한다.
