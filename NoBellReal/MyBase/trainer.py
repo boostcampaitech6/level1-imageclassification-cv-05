@@ -5,6 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import os
 import json
+from sklearn.metrics import precision_recall_fscore_support
 
 class Trainer:
     def __init__(self, model, optimizer, criterion, train_loader, val_loader, scheduler, device, args, save_dir):
@@ -32,8 +33,12 @@ class Trainer:
             self.model.train()
             loss_value = 0
             matches = 0
+
+            train_true = [] # f1 score
+            train_pred = []
+
             for idx, train_batch in enumerate(self.train_loader):# tqdm.. 안써도 ㄱㅊ을듯!
-                inputs, _, _, _,labels, _ = train_batch
+                inputs, _, _, _,labels = train_batch
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
@@ -48,13 +53,23 @@ class Trainer:
 
                 loss_value += loss.item()
                 matches += (preds == labels).sum().item()
+
+                train_true.extend(labels.cpu().numpy()) # f1 score
+                train_pred.extend(preds.cpu().numpy())
+
                 if (idx + 1) % self.args.log_interval == 0:
                     train_loss = loss_value / self.args.log_interval
                     train_acc = matches / self.args.batch_size / self.args.log_interval
                     current_lr = self.get_lr()
+
+                    precision, recall, f1_score, _ = precision_recall_fscore_support(
+                    train_true, train_pred, average='weighted', zero_division=0
+                    ) # f1 score
+
                     print(
                         f"Epoch[{epoch}/{self.args.epochs}]({idx + 1}/{len(self.train_loader)}) || "
-                        f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr}"
+                        f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr} || "
+                        f"training precision : {precision:4.2f} || training recall : {recall:4.2f} || training F1 Score : {f1_score:4.2f} || " # f1 score
                     )
                     self.logger.add_scalar(
                         "Train/loss", train_loss, epoch * len(self.train_loader) + idx
@@ -68,7 +83,7 @@ class Trainer:
 
 
             # Validation loop
-            val_loss, val_acc = self.validate()
+            val_loss, val_acc, val_precision, val_recall, val_f1 = self.validate() # f1 score
 
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
@@ -81,10 +96,12 @@ class Trainer:
             torch.save(self.model.module.state_dict(), f"{self.save_dir}/last.pth")
             print(
                 f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
+                f"precision : {val_precision:4.2f}, recall : {val_recall:4.2f}, F1 Score : {val_f1:4.2f} || " # f1 score
                 f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
             )
             self.logger.add_scalar("Val/loss", val_loss, epoch)
             self.logger.add_scalar("Val/accuracy", val_acc, epoch)
+            self.logger.add_scalar("Val/F1 Score", val_f1, epoch) # f1 score
             # self.logger.add_figure("results", figure, epoch)  # Uncomment if figure is needed
             
             self.scheduler.step(val_acc)
@@ -94,9 +111,12 @@ class Trainer:
         val_loss_items = []
         val_acc_items = []
 
+        val_true = [] # f1 score
+        val_pred = []
+
         with torch.no_grad():
             for val_batch in self.val_loader:
-                inputs, _, _, _, labels, _ = val_batch
+                inputs, _, _, _, labels = val_batch
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
@@ -108,10 +128,16 @@ class Trainer:
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
 
+                val_true.extend(labels.cpu().numpy()) # f1 score
+                val_pred.extend(preds.cpu().numpy())
+
         val_loss = np.sum(val_loss_items) / len(self.val_loader)
         val_acc = np.sum(val_acc_items) / len(self.val_loader.dataset)
-        return val_loss, val_acc
 
+        precision, recall, f1_score, _ = precision_recall_fscore_support(val_true, val_pred, average='weighted', zero_division=0) # f1 score
+
+        return val_loss, val_acc, precision, recall, f1_score # f1 score
+    
     def get_lr(self):
         for param_group in self.optimizer.param_groups:
             return param_group["lr"]

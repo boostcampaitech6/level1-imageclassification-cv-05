@@ -2,7 +2,7 @@ from importlib import import_module
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader
 import argparse
 import random
 import os
@@ -10,7 +10,6 @@ from loss import create_criterion
 from pathlib import Path
 import re
 import glob
-import pandas as pd
 
 # fix random seeds for reproducibility
 def seed_everything(seed):
@@ -53,101 +52,26 @@ def main(args):
     data_loader = data_loader_module(base_dir = args.data_dir)
     df = data_loader.create_dataframe()
     
-    ####################################################
-    # 56~59세는 train data에서 제외
-    ignore_age = df[(55< df['age'].astype(int)) & (df['age'].astype(int) <60)]                  
-    df = df[(55 >= df['age'].astype(int)) | (df['age'].astype(int) >= 60)]
-    ####################################################
-    print("___df___: ",df)
-    # Train, Val data 분할 # 나머지 나이만 train-val로 split
+    # Train, Val data 분할 
     train_df, val_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df[args.target])
     
-    # 56~59세는 val로만 배정
-    val_df = pd.concat([val_df, ignore_age], ignore_index=True)
-
     # Transform 설정 
-    custom_augmentation_module = getattr(import_module("dataset"), "None_aug") # for training
-    None_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "Horizontal_Rotate_aug") # for training
-    Horizontal_Rotate_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "Rotate_aug") # for val
-    Rotate_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_Flip_aug") # for training
-    ColorJitter_Flip_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug") # for training
-    ColorJitter_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug_for_male") # for val
-    ColorJitter_aug_for_male = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug_for_female") # for training
-    ColorJitter_aug_for_female = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "Grayscale_aug") # for training
-    Grayscale_aug = custom_augmentation_module(args.resize)
-    
-    custom_augmentation_module = getattr(import_module("dataset"), "Sharpness_augmix") # for val
-    Sharpness_augmix = custom_augmentation_module(args.resize)
+    custom_augmentation_module = getattr(import_module("dataset"), args.augmentation) # for training
+    transform = custom_augmentation_module(args.resize)
+    custom_augmentation_module = getattr(import_module("dataset"), "CustomAugmentation2") # for training
+    transform2 = custom_augmentation_module(args.resize)
+    basic_augmentation_module = getattr(import_module("dataset"), "BasicAugmentation") # for val
+    basic_transform = basic_augmentation_module(args.resize)
     
     # Dataset 생성
-    train_df_young_age_male = train_df[train_df['Total_label'].isin([0, 6, 12])]
-    train_df_young_age_female = train_df[train_df['Total_label'].isin([3, 9, 15])]   
-    train_df_middle_age_male = train_df[train_df['Total_label'].isin([1, 7, 13])] 
-    train_df_middle_age_female = train_df[train_df['Total_label'].isin([4, 10, 16])]  
-    train_df_old_age_male = train_df[train_df['Total_label'].isin([2, 8, 14])]
-    train_df_old_age_female = train_df[train_df['Total_label'].isin([5, 11, 17])]
-
-    custom_dataset_module = getattr(import_module("dataset"), args.dataset)
-
-    train_data = []
+    custom_dataset_module = getattr(import_module("dataset"), args.dataset) 
+    train_dataset = custom_dataset_module(train_df,transform)
+    train_dataset2 = custom_dataset_module(train_df,basic_transform)
+    train_dataset3 = custom_dataset_module(train_df,transform2)
     
-    # 원본 이미지
-    #train_data.append(custom_dataset_module(train_df_young_age_male, None_aug))
-    #train_data.append(custom_dataset_module(train_df_young_age_female, None_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
-
-    #청년 남성 밝기, 채도 변화
-    train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_aug_for_male))
+    train_dataset = train_dataset + train_dataset2 + train_dataset3
     
-    #청년 여성 밝기, 채도 변화
-    train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
-
-    #중년 남성 증강 4배
-    train_data.append(custom_dataset_module(train_df_middle_age_male, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, Grayscale_aug))
-
-    #중년 여성 증강 2배
-    #train_data.append(custom_dataset_module(train_df_middle_age_female, Horizontal_Rotate_aug))
-    
-    #노년 남성 증강 7배
-    train_data.append(custom_dataset_module(train_df_old_age_male, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, Grayscale_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, Sharpness_augmix))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug_for_male))
-
-    #노년 여성 증강 7배
-    train_data.append(custom_dataset_module(train_df_old_age_female, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, Grayscale_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, Sharpness_augmix))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
-
-    train_dataset = ConcatDataset(train_data)
-    #print("data set___: ", len(train_data[0]),len(train_data[1]),len(train_data[2]),len(train_data[3]))
-    #print("data set___: ", type(train_data),type(train_dataset))
-
-    val_dataset = custom_dataset_module(val_df,None_aug)
+    val_dataset = custom_dataset_module(val_df,basic_transform)
     
     # Data Loader
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=torch.cuda.is_available()) 
@@ -161,7 +85,7 @@ def main(args):
     # Train set 
     # weight = torch.tensor([0.0040, 0.0044, 0.0059, 0.0079, 0.0198, 0.0198, 0.0221, 0.0221, 0.0295,
     #     0.0295, 0.0297, 0.0390, 0.0395, 0.0395, 0.1485, 0.1485, 0.1951, 0.1951])
-    #weight = weight.to(device)
+    # weight = weight.to(device)
     # criterion = create_criterion(args.criterion, weight=weight.to(device))
     criterion = create_criterion(args.criterion)
     opt_module = getattr(import_module("torch.optim"), args.optimizer)
@@ -192,7 +116,7 @@ if __name__ == '__main__':
         "--target", type=str, default="Total_label", help="target label, ex) Mask_label, Gender_label, Age_label ..."
     )
     parser.add_argument(
-        "--epochs", type=int, default=8, help="number of epochs to train (default: 1)"
+        "--epochs", type=int, default=10, help="number of epochs to train (default: 1)"
     )
     parser.add_argument(
         "--dataset", type=str, default="CustomDataset", help="dataset augmentation type (default: MaskBaseDataset)",
@@ -210,7 +134,7 @@ if __name__ == '__main__':
         "--valid_batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="efficient_b4", help="model type (default: CustomModel)"
+        "--model", type=str, default="CustomModel", help="model type (default: CustomModel)"
     )
     parser.add_argument(
         "--optimizer", type=str, default="AdamW", help="optimizer type (default:AdamW)"
@@ -225,7 +149,7 @@ if __name__ == '__main__':
         "--criterion", type=str, default="cross_entropy", help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
-        "--lr_decay_step", type=int, default=6, help="learning rate scheduler deacy step (default: 20)",
+        "--lr_decay_step", type=int, default=20, help="learning rate scheduler deacy step (default: 20)",
     )
     parser.add_argument(
         "--log_interval", type=int, default=20, help="how many batches to wait before logging training status",
