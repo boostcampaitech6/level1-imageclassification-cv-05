@@ -153,6 +153,7 @@ class Rotate_aug:
             A.Resize(resize[0],resize[1]),
             A.Rotate(20),
             A.HorizontalFlip(p=0.1),
+            A.Normalize(),
             ToTensorV2()
             ])
     def __call__(self, image):
@@ -164,6 +165,7 @@ class ColorJitter_Flip_aug:
             A.Resize(resize[0],resize[1]),
             #A.ColorJitter(0.5, 0.5, 0.5, 0.5),
             A.HorizontalFlip(p=0.5),
+            A.Normalize(),
             ToTensorV2()
             ])
     def __call__(self, image):
@@ -175,6 +177,7 @@ class ColorJitter_aug:
             A.Resize(resize[0],resize[1]),
             A.ColorJitter(0.5, 0.5, 0.5, 0.5),
             A.HorizontalFlip(p=0.1),
+            A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -184,18 +187,19 @@ class ColorJitter_aug_for_male:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #A.ColorJitter(0.3, 0, 0.3, 0),
+            A.ColorJitter(0.3, 0, 0.3, 0),
             A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):
-        return self.transform(image= image)['image']
+        return self.transform(image= image)
     
 class ColorJitter_aug_for_female:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
             A.ToGray(p=0.1),
+            A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -207,6 +211,7 @@ class Grayscale_aug:
             A.Resize(resize[0],resize[1]),
             A.ToGray(p=1),
             A.HorizontalFlip(p=0.1),
+            A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -214,15 +219,12 @@ class Grayscale_aug:
 
 class Sharpness_augmix:
     def __init__(self, resize):
-        augs = [A.HorizontalFlip(always_apply=True),
-        A.Blur(always_apply=True),
-        A.Cutout(always_apply=True),
-        A.IAAPiecewiseAffine(always_apply=True)]
 
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
             A.Sharpen(alpha=(0.2,0.5),lightness=(0.5,1),always_apply=True),
             A.HorizontalFlip(p=0.1),
+            A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):

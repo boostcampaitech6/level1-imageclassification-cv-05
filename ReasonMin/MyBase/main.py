@@ -108,40 +108,40 @@ def main(args):
     # 원본 이미지
     #train_data.append(custom_dataset_module(train_df_young_age_male, None_aug))
     #train_data.append(custom_dataset_module(train_df_young_age_female, None_aug))
-    #train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
-    #train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
+    train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
+    train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
 
     #청년 남성 밝기, 채도 변화
-    train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_Flip_aug))
+    train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_aug_for_male))
     
     #청년 여성 밝기, 채도 변화
-    #train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
+    train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
 
     #중년 남성 증강 4배
-    #train_data.append(custom_dataset_module(train_df_middle_age_male, Horizontal_Rotate_aug))
-    #train_data.append(custom_dataset_module(train_df_middle_age_male, ColorJitter_Flip_aug))
-    #train_data.append(custom_dataset_module(train_df_middle_age_male, Grayscale_aug))
+    train_data.append(custom_dataset_module(train_df_middle_age_male, Horizontal_Rotate_aug))
+    train_data.append(custom_dataset_module(train_df_middle_age_male, ColorJitter_Flip_aug))
+    train_data.append(custom_dataset_module(train_df_middle_age_male, Grayscale_aug))
 
     #중년 여성 증강 2배
     #train_data.append(custom_dataset_module(train_df_middle_age_female, Horizontal_Rotate_aug))
-
+    
     #노년 남성 증강 7배
-    #train_data.append(custom_dataset_module(train_df_old_age_male, Horizontal_Rotate_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_Flip_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, Grayscale_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, Sharpness_augmix))
-    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug_for_male))
+    train_data.append(custom_dataset_module(train_df_old_age_male, Horizontal_Rotate_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_Flip_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_male, Grayscale_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_male, Sharpness_augmix))
+    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug_for_male))
 
     #노년 여성 증강 7배
-    #train_data.append(custom_dataset_module(train_df_old_age_female, Horizontal_Rotate_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_Flip_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, Grayscale_aug))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, Sharpness_augmix))
-    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
+    train_data.append(custom_dataset_module(train_df_old_age_female, Horizontal_Rotate_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_Flip_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_female, Grayscale_aug))
+    train_data.append(custom_dataset_module(train_df_old_age_female, Sharpness_augmix))
+    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
 
     train_dataset = ConcatDataset(train_data)
     #print("data set___: ", len(train_data[0]),len(train_data[1]),len(train_data[2]),len(train_data[3]))
@@ -192,7 +192,7 @@ if __name__ == '__main__':
         "--target", type=str, default="Total_label", help="target label, ex) Mask_label, Gender_label, Age_label ..."
     )
     parser.add_argument(
-        "--epochs", type=int, default=10, help="number of epochs to train (default: 1)"
+        "--epochs", type=int, default=8, help="number of epochs to train (default: 1)"
     )
     parser.add_argument(
         "--dataset", type=str, default="CustomDataset", help="dataset augmentation type (default: MaskBaseDataset)",
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         "--valid_batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="CustomModel", help="model type (default: CustomModel)"
+        "--model", type=str, default="efficient_b4", help="model type (default: CustomModel)"
     )
     parser.add_argument(
         "--optimizer", type=str, default="AdamW", help="optimizer type (default:AdamW)"
@@ -225,7 +225,7 @@ if __name__ == '__main__':
         "--criterion", type=str, default="cross_entropy", help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
-        "--lr_decay_step", type=int, default=20, help="learning rate scheduler deacy step (default: 20)",
+        "--lr_decay_step", type=int, default=6, help="learning rate scheduler deacy step (default: 20)",
     )
     parser.add_argument(
         "--log_interval", type=int, default=20, help="how many batches to wait before logging training status",
