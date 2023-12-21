@@ -134,26 +134,6 @@ class CustomAugmentation2:
         return self.transform(image= image)
     
 ########################################################################
-'''
-class CustomDataset(Dataset):
-    def __init__(self, img_paths, labels, transforms=None):
-        self.img_paths = img_paths
-        self.labels = labels
-        self.transforms = transforms
-
-    def __getitem__(self, index):
-        img_path = self.img_paths[index]
-        image = Image.open(img_path)
-        
-        if self.transforms is not None:
-            image = self.transforms(image)
-
-        label = self.labels[index]
-        return image, label
-    
-    def __len__(self):
-        return len(self.img_paths)
-'''
 
 class None_aug:    # 원본 이미지 반환
     def __init__(self, resize):
@@ -181,8 +161,8 @@ class Rotate_aug:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #RandomRotation(20),
-            #RandomHorizontalFlip(p=0.1),
+            A.Rotate(20),
+            A.HorizontalFlip(p=0.1),
             ToTensorV2()
             ])
     def __call__(self, image):
@@ -192,8 +172,8 @@ class ColorJitter_Flip_aug:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #ColorJitter(0.5, 0.5, 0.5, 0.5),
-            #RandomHorizontalFlip(p=0.5),
+            A.ColorJitter(0.5, 0.5, 0.5, 0.5),
+            A.HorizontalFlip(p=0.5),
             ToTensorV2()
             ])
     def __call__(self, image):
@@ -203,8 +183,8 @@ class ColorJitter_aug:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #ColorJitter(0.5, 0.5, 0.5, 0.5),
-            #RandomHorizontalFlip(p=0.1),
+            A.ColorJitter(0.5, 0.5, 0.5, 0.5),
+            A.HorizontalFlip(p=0.1),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -214,7 +194,7 @@ class ColorJitter_aug_for_male:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #ColorJitter(0.3, 0, 0.3, 0),
+            A.ColorJitter(0.3, 0, 0.3, 0),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -224,7 +204,7 @@ class ColorJitter_aug_for_female:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #RandomGrayscale(p=0.1),
+            A.ToGray(p=0.1),
             ToTensorV2()
         ])
     def __call__(self, image):

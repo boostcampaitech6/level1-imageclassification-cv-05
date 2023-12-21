@@ -106,42 +106,42 @@ def main(args):
     train_data = []
     
     # 원본 이미지
-    #train_dataset.append(custom_dataset_module(train_df_young_age_male, None_aug))
-    #train_dataset.append(custom_dataset_module(train_df_young_age_female, None_aug))
+    train_data.append(custom_dataset_module(train_df_young_age_male, None_aug))
+    train_data.append(custom_dataset_module(train_df_young_age_female, None_aug))
     train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
     train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
     train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
     train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
 
     #청년 남성 밝기, 채도 변화
-    train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_aug_for_male))
+    #train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_aug_for_male))
     
     #청년 여성 밝기, 채도 변화
-    train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
+    #train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
 
     #중년 남성 증강 4배
-    train_data.append(custom_dataset_module(train_df_middle_age_male, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, Grayscale_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_male, Horizontal_Rotate_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_male, ColorJitter_Flip_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_male, Grayscale_aug))
 
     #중년 여성 증강 2배
-    train_data.append(custom_dataset_module(train_df_middle_age_female, Horizontal_Rotate_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_female, Horizontal_Rotate_aug))
 
     #노년 남성 증강 7배
-    train_data.append(custom_dataset_module(train_df_old_age_male, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, Grayscale_aug))
-    #train_dataset.append(custom_dataset_module(train_df_old_age_male, Sharpness_augmix))
-    train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug_for_male))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, Horizontal_Rotate_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_Flip_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, Grayscale_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, Sharpness_augmix))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, ColorJitter_aug_for_male))
 
     #노년 여성 증강 7배
-    train_data.append(custom_dataset_module(train_df_old_age_female, Horizontal_Rotate_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_Flip_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, Grayscale_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, Horizontal_Rotate_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_Flip_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, Grayscale_aug))
     #train_data.append(custom_dataset_module(train_df_old_age_female, Sharpness_augmix))
-    train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
 
     train_dataset = ConcatDataset(train_data)
     
