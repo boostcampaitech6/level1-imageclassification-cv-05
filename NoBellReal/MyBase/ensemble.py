@@ -29,10 +29,9 @@ def soft_voting(*prob_files):
     return final_predictions
 
 def main(args):
-    
     if args.ensemble_method == 'hard_voting':
         file_name = 'output.csv'
-    else :
+    else:
         file_name = 'my_list.pkl'
 
     model_output_files = [os.path.join(directory, file_name) for directory in BASE_MODEL_DIRECTORIES]
@@ -41,7 +40,7 @@ def main(args):
         model_outputs = [read_model_output(file_path) for file_path in model_output_files]
         final_predictions = hard_voting(*model_outputs)
     elif args.ensemble_method == 'soft_voting':
-        final_predictions = soft_voting(model_output_files)
+        final_predictions = soft_voting(*model_output_files)  # '*'를 사용하여 리스트를 개별 요소로 전달
 
     image_ids = pd.read_csv(os.path.join(BASE_MODEL_DIRECTORIES[0], 'output.csv'))['ImageID']
     output_df = pd.DataFrame({'ImageID': image_ids, 'ans': final_predictions})
