@@ -96,7 +96,7 @@ class Trainer:
 
         with torch.no_grad():
             for val_batch in self.val_loader:
-                inputs, _, _, _, labels = val_batch
+                inputs, _, _, _, labels, _ = val_batch
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 

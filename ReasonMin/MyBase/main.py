@@ -72,7 +72,7 @@ def main(args):
     custom_augmentation_module = getattr(import_module("dataset"), "Horizontal_Rotate_aug") # for training
     Horizontal_Rotate_aug = custom_augmentation_module(args.resize)
     
-    basic_augmentation_module = getattr(import_module("dataset"), "Rotate_aug") # for val
+    custom_augmentation_module = getattr(import_module("dataset"), "Rotate_aug") # for val
     Rotate_aug = custom_augmentation_module(args.resize)
     
     custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_Flip_aug") # for training
@@ -81,7 +81,7 @@ def main(args):
     custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug") # for training
     ColorJitter_aug = custom_augmentation_module(args.resize)
     
-    basic_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug_for_male") # for val
+    custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug_for_male") # for val
     ColorJitter_aug_for_male = custom_augmentation_module(args.resize)
     
     custom_augmentation_module = getattr(import_module("dataset"), "ColorJitter_aug_for_female") # for training
@@ -90,7 +90,7 @@ def main(args):
     custom_augmentation_module = getattr(import_module("dataset"), "Grayscale_aug") # for training
     Grayscale_aug = custom_augmentation_module(args.resize)
     
-    basic_augmentation_module = getattr(import_module("dataset"), "Sharpness_augmix") # for val
+    custom_augmentation_module = getattr(import_module("dataset"), "Sharpness_augmix") # for val
     Sharpness_augmix = custom_augmentation_module(args.resize)
     
     # Dataset 생성
@@ -106,15 +106,15 @@ def main(args):
     train_data = []
     
     # 원본 이미지
-    train_data.append(custom_dataset_module(train_df_young_age_male, None_aug))
-    train_data.append(custom_dataset_module(train_df_young_age_female, None_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
-    train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
-    train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
+    #train_data.append(custom_dataset_module(train_df_young_age_male, None_aug))
+    #train_data.append(custom_dataset_module(train_df_young_age_female, None_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_male, None_aug))
+    #train_data.append(custom_dataset_module(train_df_middle_age_female, None_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_male, None_aug))
+    #train_data.append(custom_dataset_module(train_df_old_age_female, None_aug))
 
     #청년 남성 밝기, 채도 변화
-    #train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_aug_for_male))
+    train_data.append(custom_dataset_module(train_df_young_age_male, ColorJitter_Flip_aug))
     
     #청년 여성 밝기, 채도 변화
     #train_data.append(custom_dataset_module(train_df_young_age_female, ColorJitter_aug_for_female))
@@ -144,7 +144,9 @@ def main(args):
     #train_data.append(custom_dataset_module(train_df_old_age_female, ColorJitter_aug_for_female))
 
     train_dataset = ConcatDataset(train_data)
-    
+    #print("data set___: ", len(train_data[0]),len(train_data[1]),len(train_data[2]),len(train_data[3]))
+    #print("data set___: ", type(train_data),type(train_dataset))
+
     val_dataset = custom_dataset_module(val_df,None_aug)
     
     # Data Loader
@@ -159,7 +161,7 @@ def main(args):
     # Train set 
     # weight = torch.tensor([0.0040, 0.0044, 0.0059, 0.0079, 0.0198, 0.0198, 0.0221, 0.0221, 0.0295,
     #     0.0295, 0.0297, 0.0390, 0.0395, 0.0395, 0.1485, 0.1485, 0.1951, 0.1951])
-    # weight = weight.to(device)
+    #weight = weight.to(device)
     # criterion = create_criterion(args.criterion, weight=weight.to(device))
     criterion = create_criterion(args.criterion)
     opt_module = getattr(import_module("torch.optim"), args.optimizer)
@@ -199,7 +201,7 @@ if __name__ == '__main__':
         "--augmentation", type=str, default="CustomAugmentation", help="data augmentation type (default: BaseAugmentation)",
     )
     parser.add_argument(
-        "--resize", nargs=2, type=int, default=(224, 224), help="resize size for image when training",
+        "--resize", nargs=2, type=int, default=(256, 256), help="resize size for image when training",
     )
     parser.add_argument(
         "--batch_size", type=int, default=64, help="input batch size for training (default: 64)",
@@ -208,7 +210,7 @@ if __name__ == '__main__':
         "--valid_batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
-        "--model", type=str, default="efficient_b4", help="model type (default: CustomModel)"
+        "--model", type=str, default="CustomModel", help="model type (default: CustomModel)"
     )
     parser.add_argument(
         "--optimizer", type=str, default="AdamW", help="optimizer type (default:AdamW)"

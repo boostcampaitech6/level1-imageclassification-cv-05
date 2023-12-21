@@ -4,19 +4,8 @@ from torch.utils.data import Dataset
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 import numpy as np
-from torchvision.transforms import (
-    Resize,
-    ToTensor,
-    Normalize,
-    Compose,
-    RandomAdjustSharpness,
-    ColorJitter,
-    AugMix,
-    Grayscale,
-    RandomGrayscale,
-    RandomRotation,
-    RandomHorizontalFlip
-)
+
+
 
 class CustomDataset(Dataset):
     
@@ -152,6 +141,7 @@ class Horizontal_Rotate_aug:
             A.Resize(resize[0],resize[1]),
             A.HorizontalFlip(p=1),
             A.Rotate(limit=20),
+            A.Normalize(),
             ToTensorV2()
             ])
     def __call__(self, image):
@@ -172,7 +162,7 @@ class ColorJitter_Flip_aug:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            A.ColorJitter(0.5, 0.5, 0.5, 0.5),
+            #A.ColorJitter(0.5, 0.5, 0.5, 0.5),
             A.HorizontalFlip(p=0.5),
             ToTensorV2()
             ])
@@ -194,11 +184,12 @@ class ColorJitter_aug_for_male:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            A.ColorJitter(0.3, 0, 0.3, 0),
+            #A.ColorJitter(0.3, 0, 0.3, 0),
+            A.Normalize(),
             ToTensorV2()
         ])
     def __call__(self, image):
-        return self.transform(image= image)
+        return self.transform(image= image)['image']
     
 class ColorJitter_aug_for_female:
     def __init__(self, resize):
@@ -214,8 +205,8 @@ class Grayscale_aug:
     def __init__(self, resize):
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #Grayscale(num_output_channels = 3),
-            #RandomHorizontalFlip(p=0.1),
+            A.ToGray(p=1),
+            A.HorizontalFlip(p=0.1),
             ToTensorV2()
         ])
     def __call__(self, image):
@@ -223,11 +214,15 @@ class Grayscale_aug:
 
 class Sharpness_augmix:
     def __init__(self, resize):
+        augs = [A.HorizontalFlip(always_apply=True),
+        A.Blur(always_apply=True),
+        A.Cutout(always_apply=True),
+        A.IAAPiecewiseAffine(always_apply=True)]
+
         self.transform = A.Compose([
             A.Resize(resize[0],resize[1]),
-            #RandomAdjustSharpness(sharpness_factor=0.5, p=1),
-            #RandomHorizontalFlip(p=0.1),
-            #AugMix(1, 2, -1, 0.5, True),
+            A.Sharpen(alpha=(0.2,0.5),lightness=(0.5,1),always_apply=True),
+            A.HorizontalFlip(p=0.1),
             ToTensorV2()
         ])
     def __call__(self, image):
