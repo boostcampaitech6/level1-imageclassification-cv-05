@@ -29,7 +29,7 @@ CV-05조 입니다!
 
 ---
 
-- 데이터 불균형 처리 → Upsampling, DownSampling
+- 데이터 불균형 처리 → Oversampling, DownSampling
 - 데이터 전처리 시도 → 이미지 Background 제거, Crop
 
 ### 모델
