@@ -53,7 +53,7 @@ def main(args):
     df = data_loader.create_dataframe()
     
     # Train, Val data 분할 
-    train_df, val_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df[args.target])
+    train_df, val_df = train_test_split(df, test_size=0.05, random_state=42, stratify=df[args.target])
     
     # Transform 설정 
     custom_augmentation_module = getattr(import_module("dataset"), args.augmentation) # for training
