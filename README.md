@@ -80,11 +80,13 @@ CV-05조 입니다!
     - OverSampling : 30 ~ 59 →3 배 / 60대 → 7배
     - DownSampling : 56 ~ 59 → Drop
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/0c223c08-3e15-486f-b99e-5ffbf48c692d/f948ef3a-cf15-4d58-9cbf-f4156b4723cb/Untitled.png)
+![image](https://github.com/boostcampaitech6/level1-imageclassification-cv-05/assets/98599867/6c8edfe7-b9e2-4a15-b1b5-d186a57c6de1)
+
 
 - 성별 불균형
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/0c223c08-3e15-486f-b99e-5ffbf48c692d/3232edb1-7952-471c-8c00-56da0f71bdc5/Untitled.png)
+![image](https://github.com/boostcampaitech6/level1-imageclassification-cv-05/assets/98599867/dfcbafcb-beca-41d6-8924-1a44a064e3cc)
+
 
 ## 배운점
 
