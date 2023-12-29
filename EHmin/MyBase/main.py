@@ -173,5 +173,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # print(args)
     main(args)
-    
-    # /opt/conda/bin/python /data/ephemeral/home/level1-imageclassification-cv-05/EHmin/MyBase/main.py
